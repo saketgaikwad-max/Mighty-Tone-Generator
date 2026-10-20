@@ -17,9 +17,8 @@
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "types": ["node"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src", "tests", "tools", "vitest.config.ts"]

@@ -56,7 +56,7 @@ describe('preset codec (UNIT-CODEC-03 per field)', () => {
   it('decode -> encode is byte-identical, including unmodelled bytes', () => {
     const raw = synthPreset();
     for (const i of [0, 10, 11, 12, 13, 81, 82, 83, 85, 86, 87, 88]) raw[i] = (i * 7) & 0xff;
-    raw[3] |= 0x80; // unmodelled high bit on a head byte
+    raw[3] = raw[3]! | 0x80; // unmodelled high bit on a head byte
     expect(encodePreset(decodePreset(raw))).toEqual(raw);
   });
 
