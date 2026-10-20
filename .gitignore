@@ -1,6 +1,7 @@
 .DS_Store
 .venv/
 node_modules/
+.npm-cache/
 dist/
 coverage/
 *.log

@@ -1,0 +1,29 @@
+{
+  "name": "mighty-tone-generator",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Natural-language tone requests to NUX Mighty Space patches (QR).",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "extract": "node tools/extract-plugpro.ts",
+    "decode-fixtures": "node tools/decode-fixture-qr.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run typecheck && npm run test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pngjs": "^6.0.5",
+    "fast-check": "^4.0.0",
+    "jsqr": "^1.4.0",
+    "pngjs": "^7.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0",
+    "zod": "^4.0.0"
+  }
+}
