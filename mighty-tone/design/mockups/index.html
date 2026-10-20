@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mighty Tone Generator — Low-fi mocks</title>
+<style>
+:root{--bg:#0B0D14;--raised:#141826;--glass:rgba(28,32,52,.62);--stroke:rgba(255,255,255,.08);--t1:#F2F3F8;--t2:#9AA0B8;--t3:#62677E;--ac:#7C6CFF;--ac2:#4F8BFF;--grad:linear-gradient(135deg,#7C6CFF,#4F8BFF);--glow:0 0 24px rgba(124,108,255,.45);--hi:#34D399;--med:#FBBF24;--lo:#F87171}
+*{box-sizing:border-box}body{margin:0;background:#05060a;color:var(--t1);font:15px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif}
+a{color:inherit;text-decoration:none}
+.gallery{padding:24px 32px}.gallery h1{font-size:28px;margin:0 0 4px}.gallery p{color:var(--t2);margin:0 0 12px}
+.nav{display:flex;flex-wrap:wrap;gap:8px}.nav a{padding:6px 12px;border-radius:999px;background:var(--raised);border:1px solid var(--stroke);font-size:13px}
+.grid{display:flex;flex-wrap:wrap;gap:40px;padding:16px 32px 60px}
+.screen{display:flex;flex-direction:column;gap:8px}.label{font-size:13px;color:var(--t2)}
+.phone{width:390px;height:844px;border-radius:48px;background:radial-gradient(120% 60% at 20% 0%,#1b1f3a 0%,var(--bg) 55%);border:10px solid #1d1f27;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.sb{height:44px;display:flex;justify-content:space-between;padding:14px 26px 0;font-size:14px;font-weight:600;flex:none}
+.body{flex:1;overflow:auto;padding:0 16px 100px}
+.lt{font-size:34px;font-weight:700;margin:6px 0 10px}.t2{font-size:22px;font-weight:700}.hd{font-weight:600;font-size:17px}
+.sub{color:var(--t2);font-size:13px}.cap{font-size:12px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin:16px 4px 6px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:4px 0;color:var(--ac)}
+.card{background:var(--glass);border:1px solid var(--stroke);border-radius:18px;padding:14px;backdrop-filter:blur(24px);box-shadow:0 8px 24px rgba(0,0,0,.35);margin-bottom:10px}
+.glow{box-shadow:var(--glow);border-color:rgba(124,108,255,.5)}
+.list{background:var(--glass);border:1px solid var(--stroke);border-radius:18px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--stroke);min-height:44px}.row:last-child{border:0}.row .grow{flex:1}
+.search{background:rgba(118,118,128,.24);border-radius:12px;padding:9px 12px;color:var(--t2);margin-bottom:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:999px;background:var(--raised);border:1px solid var(--stroke);font-weight:600;font-size:15px}
+.btn.p{background:var(--grad);border:0;box-shadow:var(--glow)}.btn.sm{min-height:32px;font-size:13px;padding:0 12px}.btn.w{width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{padding:7px 12px;border-radius:999px;background:var(--raised);border:1px solid var(--stroke);font-size:13px}.chip.on{background:rgba(124,108,255,.25);border-color:var(--ac);color:#fff}
+.seg{display:flex;background:rgba(118,118,128,.24);border-radius:10px;padding:2px}.seg span{flex:1;text-align:center;padding:6px 4px;border-radius:8px;font-size:13px}.seg .on{background:#3a3f5c}
+.tog{width:51px;height:31px;border-radius:999px;background:#39394a;position:relative;flex:none}.tog::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff}.tog.on{background:var(--ac)}.tog.on::after{left:22px}
+.stepper{display:flex;border-radius:9px;background:rgba(118,118,128,.24)}.stepper span{padding:4px 14px;font-weight:600}
+.qr{width:72px;height:72px;border-radius:10px;background:#fff;flex:none;padding:6px}.qr i{display:block;width:100%;height:100%;background:conic-gradient(#000 25%,#fff 0 50%,#000 0 75%,#fff 0) 0 0/12px 12px,#fff;}
+.qr.lg{width:150px;height:150px}.qr.sm{width:44px;height:44px;padding:4px;border-radius:8px}.qr.sm i{background-size:7px 7px}
+.badge{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600}.b-med{background:rgba(251,191,36,.15);color:var(--med)}.b-hi{background:rgba(52,211,153,.15);color:var(--hi)}.b-lo{background:rgba(248,113,113,.15);color:var(--lo)}
+.chain{display:flex;gap:4px;overflow:auto}.blk{flex:none;padding:6px 8px;border-radius:10px;background:var(--raised);border:1px solid var(--stroke);font-size:11px;text-align:center;min-width:52px}.blk.on{border-color:var(--ac);color:#fff}.blk.off{opacity:.4}
+.bubble{max-width:80%;padding:10px 14px;border-radius:18px;margin:6px 0;font-size:15px}.me{margin-left:auto;background:var(--grad);border-bottom-right-radius:6px}.ai{background:var(--raised);border:1px solid var(--stroke);border-bottom-left-radius:6px}
+.composer{position:absolute;left:0;right:0;bottom:0;padding:10px 12px 30px;background:var(--glass);backdrop-filter:blur(30px);border-top:1px solid var(--stroke);display:flex;gap:8px;align-items:center}
+.input{flex:1;background:rgba(118,118,128,.24);border-radius:20px;padding:10px 14px;color:var(--t2)}
+.field{background:rgba(118,118,128,.18);border-radius:12px;padding:11px 12px;color:var(--t2);border:1px solid var(--stroke)}
+.tabbar{position:absolute;bottom:0;left:0;right:0;height:84px;background:var(--glass);backdrop-filter:blur(30px);border-top:1px solid var(--stroke);display:flex;justify-content:space-around;padding-top:8px}
+.tabbar a{display:flex;flex-direction:column;align-items:center;font-size:10px;color:var(--t3);gap:2px}.tabbar a b{font-size:22px;font-weight:400}.tabbar a.on{color:var(--ac)}
+.slider{height:6px;border-radius:3px;background:#2a2e44;position:relative;margin:8px 0}.slider i{position:absolute;inset:0 auto 0 0;border-radius:3px;background:var(--grad)}.slider i::after{content:"";position:absolute;right:-8px;top:-5px;width:16px;height:16px;border-radius:50%;background:#fff}
+.kv{display:grid;grid-template-columns:70px 1fr 34px;gap:8px;align-items:center;font-size:13px;color:var(--t2)}.kv b{font-variant-numeric:tabular-nums;color:var(--t1);font-weight:500;text-align:right}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:120px;background:#171b2c;border-radius:26px 26px 0 0;border-top:1px solid var(--stroke);padding:8px 16px 30px;box-shadow:0 -8px 40px rgba(0,0,0,.5);overflow:auto}
+.sheet::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:#555;margin:0 auto 12px}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.ic{width:36px;height:36px;border-radius:10px;background:var(--raised);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none;border:1px solid var(--stroke)}
+.row2{display:flex;gap:8px}.center{text-align:center}
+.tl{display:flex;gap:8px;overflow:auto;padding-bottom:4px}.tl .v{flex:none;width:64px;text-align:center;font-size:12px}.tl .dot{width:14px;height:14px;border-radius:50%;margin:0 auto 6px;background:#2a2e44;border:2px solid var(--t3)}.tl .v.on .dot{background:var(--ac);border-color:var(--ac);box-shadow:var(--glow)}
+.diff{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--t2)}.diff .p{color:var(--hi)}.diff .m{color:var(--lo)}
+.desk{width:1280px;height:800px;border-radius:14px;border:1px solid #2a2d38;background:var(--bg);display:grid;grid-template-columns:260px 1fr 380px;overflow:hidden}
+.desk>div{border-right:1px solid var(--stroke);padding:16px;overflow:auto;position:relative}
+</style></head><body>
+<div class="gallery"><h1>Mighty Tone Generator — low-fi mocks</h1><p>Dark-first, iOS idioms (Konsta UI iOS theme emulated). Click chips to jump; tab bars/buttons link between screens.</p>
+<div class="nav"><a href="#s1">1 Sessions</a><a href="#s2">2 New session</a><a href="#s3">3 Tone chat</a><a href="#s4">4 Versions</a><a href="#s5">5 Feedback</a><a href="#s6">6 Signal chain</a><a href="#s7">7 Delay helper</a><a href="#s8">8 Variants</a><a href="#s9a">9a IR recs</a><a href="#s9b">9b IR prep</a><a href="#s9c">9c IR slots</a><a href="#s10">10 Saved tones</a><a href="#s11">11 Profile</a><a href="#s12">12 LLM handoff</a><a href="#s13">Mac layout</a></div></div>
+
+<div class="grid">
+
+<!-- 1 -->
+<section class="screen" id="s1"><div class="label">1 · Sessions</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body">
+<div class="topbar"><span>Edit</span><a href="#s2" style="font-size:26px">＋</a></div>
+<div class="lt">Sessions</div><div class="search">⌕ Search sessions, tones, songs</div>
+<a href="#s2" class="btn p w" style="margin-bottom:14px">＋ New session</a>
+<div class="list">
+<a href="#s3" class="row"><div class="ic">🎸</div><div class="grow"><div class="hd">Opeth cleans</div><div class="sub">Avion AV-6 · neck HB · “Windowpane clean” v3 · 2h ago</div></div><div class="qr sm"><i></i></div></a>
+<a href="#s3" class="row"><div class="ic">🪕</div><div class="grow"><div class="hd">Bluegrass practice</div><div class="sub">HB F-style mandolin · “Woody chop” v1 · Yesterday</div></div><div class="qr sm"><i></i></div></a>
+<a href="#s3" class="row"><div class="ic">🎸</div><div class="grow"><div class="hd">Campfire strum (DADGAD)</div><div class="sub">Jumbo King · Isys · capo 2 · “Shimmer strum” v5</div></div><div class="qr sm"><i></i></div></a>
+<a href="#s3" class="row"><div class="ic">🎸</div><div class="grow"><div class="hd">Church set</div><div class="sub">EJ-200CE · piezo · band mix · “Warm wash” v2</div></div><div class="qr sm"><i></i></div></a>
+</div></div>
+<nav class="tabbar"><a class="on" href="#s1"><b>☰</b>Sessions</a><a href="#s10"><b>♡</b>Saved Tones</a><a href="#s9a"><b>〰</b>IR Lab</a><a href="#s11"><b>◯</b>Profile</a></nav></div></section>
+
+<!-- 2 -->
+<section class="screen" id="s2"><div class="label">2 · New session setup</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body">
+<div class="topbar"><a href="#s1">Cancel</a><b style="color:var(--t1)">New Session</b><a href="#s3"><b>Create</b></a></div>
+<div class="cap">Name</div><div class="field" style="color:var(--t1)">Opeth cleans</div>
+<div class="cap">Instrument</div>
+<div class="list">
+<div class="row" style="background:rgba(124,108,255,.12)"><div class="ic">🎸</div><div class="grow"><div class="hd">Greg Bennett Avion AV-6</div><div class="sub">Electric · HH passive</div></div><span style="color:var(--ac)">✓</span></div>
+<div class="row"><div class="ic">🎸</div><div class="grow"><div>Harley Benton Jumbo King</div><div class="sub">Acoustic · Fishman Isys active</div></div></div>
+<div class="row"><div class="ic">🎸</div><div class="grow"><div>Epiphone EJ-200CE</div><div class="sub">Acoustic · passive piezo</div></div></div>
+<div class="row"><div class="ic">🪕</div><div class="grow"><div>Harley Benton F-style mandolin</div><div class="sub">Stacked single-coil-size HB</div></div></div>
+<div class="row"><div class="ic">＋</div><div class="grow" style="color:var(--ac)">Other instrument (manual entry)</div></div>
+</div>
+<div class="cap">Pickup</div><div class="seg"><span class="on">Neck</span><span>Both</span><span>Bridge</span></div>
+<div class="sub" style="margin:6px 4px">ⓘ AV-6: 3-way toggle, 1 vol + 1 tone. Start with tone at 7–8 for sparkle.</div>
+<div class="cap">Tuning</div><div class="list"><div class="row"><div class="grow">Tuning</div><div class="seg" style="width:170px"><span class="on">Standard</span><span>Custom</span></div></div>
+<div class="row"><div class="grow sub">Custom e.g. DADGAD</div></div>
+<div class="row"><div class="grow">Capo fret</div><span class="sub">0</span><div class="stepper"><span>−</span><span>＋</span></div></div></div>
+<div class="cap">Playing context</div><div class="seg"><span>Home speaker</span><span class="on">Headphones</span><span>Band mix</span></div>
+</div></div></section>
+
+<!-- 3 -->
+<section class="screen" id="s3"><div class="label">3 · Tone chat + result card</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body" style="padding-bottom:110px">
+<div class="topbar"><a href="#s1">‹ Sessions</a><b style="color:var(--t1)">Opeth cleans</b><a href="#s4">v1 ▾</a></div>
+<div class="sub center">Avion AV-6 · Neck HB · Standard · Headphones</div>
+<div class="bubble me">Opeth Windowpane clean, dark and sparkly</div>
+<div class="bubble ai">Here’s a starting patch built around a Twin-style clean with chorus and a long hall.</div>
+<div class="card glow">
+<div style="display:flex;gap:12px"><div class="qr"><i></i></div><div style="flex:1"><div class="hd">Windowpane Clean ✎</div><span class="badge b-med">● Medium confidence</span><div class="sub" style="margin-top:4px">Rig info solid; original used a different guitar; no exact match for studio reverb.</div></div></div>
+<div class="cap" style="margin-top:10px">Why</div><div class="sub">Neck humbucker is darker than Åkerfeldt’s guitar, so treble 60 + bright on adds sparkle without harshness; low gain 20 stays clean; CE-2 depth 30 gives the shimmer; hall mix 30 for space.</div>
+<div class="cap">Signal chain</div>
+<a href="#s6" class="chain"><span class="blk off">Gate</span><span class="blk off">Comp</span><span class="blk off">EFX</span><span class="blk on">Twin Rvb</span><span class="blk on">TR212</span><span class="blk off">EQ</span><span class="blk on">CE-2</span><span class="blk on">Analog</span><span class="blk on">Hall</span></a>
+<div class="row2" style="margin-top:12px;flex-wrap:wrap"><span class="btn sm">♡ Save</span><a href="#s8" class="btn sm">⧉ Variants</a><span class="btn sm">⇪ Share QR</span><span class="btn sm">✎ Edit name</span></div>
+<div class="row2" style="margin-top:8px"><a href="#s5" class="btn sm p">Give feedback</a><a href="#s7" class="btn sm">⏱ Delay helper</a></div>
+</div></div>
+<div class="composer"><span style="font-size:22px;color:var(--ac)">＋</span><div class="input">Describe a tone… (hold 🎙 to dictate)</div><span class="btn sm p">↑</span></div></div></section>
+
+<!-- 4 -->
+<section class="screen" id="s4"><div class="label">4 · Version timeline</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body">
+<div class="topbar"><a href="#s3">‹ Chat</a><b style="color:var(--t1)">Versions</b><span>Compare</span></div>
+<div class="tl card"><div class="v"><div class="dot"></div>v1</div><div class="v"><div class="dot"></div>v2</div><div class="v on"><div class="dot"></div>v3</div><div class="v"><div class="dot"></div>v3a ⑂</div></div>
+<div class="card glow"><div style="display:flex;gap:12px"><div class="qr"><i></i></div><div><div class="hd">v3 · current</div><div class="sub">After “a bit muddy, too wet”</div><span class="badge b-hi">● High</span></div></div>
+<div class="cap">What changed vs v2</div><div class="diff">Reverb mix <span class="m">30</span> → <span class="p">22</span><br>Amp bass <span class="m">50</span> → <span class="p">42</span><br>Delay mix 15 (unchanged, locked 🔒)</div>
+<div class="row2" style="margin-top:10px"><span class="btn sm">⑂ Branch from v3</span><span class="btn sm">Restore</span></div></div>
+<div class="card"><div style="display:flex;gap:12px"><div class="qr sm"><i></i></div><div><div class="hd">v2</div><div class="diff">Treble 55 → 60, Bright off → on</div></div></div></div>
+<div class="card"><div style="display:flex;gap:12px"><div class="qr sm"><i></i></div><div><div class="hd">v1</div><div class="diff">Initial from prompt</div></div></div></div>
+<div class="card"><div style="display:flex;gap:12px"><div class="qr sm"><i></i></div><div><div class="hd">v3a ⑂ branch</div><div class="diff">Hall → Plate, decay 60 → 45</div></div></div></div>
+</div></div></section>
+
+<!-- 5 -->
+<section class="screen" id="s5"><div class="label">5 · Feedback composer (sheet)</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="dim"></div><div class="sheet">
+<div class="topbar"><a href="#s3">Cancel</a><b style="color:var(--t1)">How did it sound?</b><a href="#s4"><b>Send</b></a></div>
+<div class="cap">Quick tags</div><div class="chips"><span class="chip on">Muddy</span><span class="chip">Harsh</span><span class="chip">Thin</span><span class="chip">Boomy</span><span class="chip">Too much gain</span><span class="chip">Too little gain</span><span class="chip on">Too wet</span><span class="chip">Too dry</span><span class="chip">Buried in mix</span></div>
+<div class="cap">Tell me more</div><div class="field" style="height:70px">Lows smear when I strum the open Em chord…</div>
+<div class="cap">Current amp state</div><div class="row card" style="padding:10px"><div class="ic">▣</div><div class="grow">Attach QR screenshot from amp<div class="sub">I tweaked knobs on the amp — read them back</div></div><span class="btn sm">Choose</span></div>
+<div class="cap">Lock blocks (don’t change)</div><div class="chips"><span class="chip">Gate</span><span class="chip">Comp</span><span class="chip">EFX</span><span class="chip on">🔒 Amp</span><span class="chip on">🔒 Cab</span><span class="chip">EQ</span><span class="chip">Mod</span><span class="chip on">🔒 Delay</span><span class="chip">Reverb</span></div>
+<div class="cap">Want options?</div><div class="seg"><span class="on">1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+<div class="sub" style="margin:6px 4px">1 = single refined tone · 2–5 = variants batch</div>
+</div></div></section>
+
+<!-- 6 -->
+<section class="screen" id="s6"><div class="label">6 · Signal chain detail</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body">
+<div class="topbar"><a href="#s3">‹ Windowpane Clean</a><span></span><span>v3</span></div><div class="t2" style="margin:6px 0 10px">Signal chain</div>
+<div class="list"><div class="row"><div class="tog"></div><div class="grow">Noise Gate<div class="sub">Off</div></div><span>🔓</span></div>
+<div class="row"><div class="tog"></div><div class="grow">Compressor<div class="sub">Off</div></div><span>🔓</span></div>
+<div class="row"><div class="tog"></div><div class="grow">EFX / Drive<div class="sub">Off</div></div><span>🔓</span></div></div>
+<div class="card glow" style="margin-top:10px"><div style="display:flex;align-items:center;gap:10px"><div class="tog on"></div><div class="grow" style="flex:1"><div class="hd">Amp · Twin Rvb</div><div class="sub">Modeled on Fender ’65 Twin Reverb</div></div><span>🔒</span></div>
+<div class="kv"><span>Gain</span><div class="slider"><i style="width:20%"></i></div><b>20</b><span>Master</span><div class="slider"><i style="width:70%"></i></div><b>70</b><span>Bass</span><div class="slider"><i style="width:42%"></i></div><b>42</b><span>Mid</span><div class="slider"><i style="width:40%"></i></div><b>40</b><span>Treble</span><div class="slider"><i style="width:60%"></i></div><b>60</b><span>Bright</span><span>On</span><b></b></div></div>
+<div class="card"><div style="display:flex;gap:10px;align-items:center"><div class="tog on"></div><div style="flex:1"><div class="hd">IR / Cab · TR212</div><div class="sub">Twin 2×12, Jensen-style speakers</div></div><span>🔒</span></div></div>
+<div class="list"><div class="row"><div class="tog"></div><div class="grow">EQ<div class="sub">Off</div></div><span>🔓</span></div></div>
+<div class="card" style="margin-top:10px"><div style="display:flex;gap:10px;align-items:center"><div class="tog on"></div><div style="flex:1"><div class="hd">Mod · CE-2</div><div class="sub">Boss CE-2 analog chorus</div></div><span>🔓</span></div><div class="kv"><span>Depth</span><div class="slider"><i style="width:30%"></i></div><b>30</b><span>Rate</span><div class="slider"><i style="width:20%"></i></div><b>20</b></div></div>
+<a href="#s7" class="card" style="display:block"><div style="display:flex;gap:10px;align-items:center"><div class="tog on"></div><div style="flex:1"><div class="hd">Delay · Analog</div><div class="sub">BBD analog delay · 448 ms · mix 15 ›</div></div><span>🔒</span></div></a>
+<div class="card"><div style="display:flex;gap:10px;align-items:center"><div class="tog on"></div><div style="flex:1"><div class="hd">Reverb · Hall</div><div class="sub">Concert hall</div></div><span>🔓</span></div><div class="kv"><span>Decay</span><div class="slider"><i style="width:60%"></i></div><b>60</b><span>Mix</span><div class="slider"><i style="width:22%"></i></div><b>22</b></div></div>
+<div class="sub center">Read-only — change via feedback or amp app</div></div></div></section>
+
+<!-- 7 -->
+<section class="screen" id="s7"><div class="label">7 · Delay helper sheet</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="dim"></div><div class="sheet" style="top:200px">
+<div class="topbar"><a href="#s3">Close</a><b style="color:var(--t1)">Delay helper</b><span></span></div>
+<div class="cap">Type</div><div class="seg"><span class="on">Analog</span><span>Digital</span><span>Tape</span><span>Mod</span><span>Pan</span><span>Phi</span></div>
+<div class="cap">Tempo</div><div class="row2"><div class="field" style="flex:1;color:var(--t1);font-size:22px;font-weight:600">133.3 <span class="sub">BPM</span></div><span class="btn" style="width:110px">Tap ●</span></div>
+<div class="cap">Division</div><div class="seg"><span>1/4</span><span class="on">dotted 1/8</span><span>1/8</span><span>triplet</span></div>
+<div class="card center" style="margin-top:14px"><div class="sub">Computed</div><div style="font-size:34px;font-weight:700">450 ms</div><div class="sub">Nearest device value <b style="color:var(--t1)">448 ms</b> (target 450)</div></div>
+<a href="#s3" class="btn p w">Apply to Windowpane Clean</a></div></div></section>
+
+<!-- 8 -->
+<section class="screen" id="s8"><div class="label">8 · Variants batch</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body">
+<div class="topbar"><a href="#s3">‹ Chat</a><b style="color:var(--t1)">3 variants</b><span>Keep</span></div>
+<div class="sub center" style="margin:6px 0 10px">Swipe ← → · tap to load on amp</div>
+<div style="display:flex;gap:10px;overflow:auto;margin:0 -16px;padding:0 16px">
+<div class="card" style="flex:none;width:240px"><div class="hd">Darker</div><div class="qr lg" style="margin:10px auto"><i></i></div><span class="badge b-med">● Medium</span><div class="diff" style="margin-top:6px">Treble 60→48, Bright off<br>Hall mix 22→26</div></div>
+<div class="card glow" style="flex:none;width:240px"><div class="hd">Balanced</div><div class="qr lg" style="margin:10px auto"><i></i></div><span class="badge b-hi">● High</span><div class="diff" style="margin-top:6px">= v3</div></div>
+<div class="card" style="flex:none;width:240px"><div class="hd">Brighter</div><div class="qr lg" style="margin:10px auto"><i></i></div><span class="badge b-med">● Medium</span><div class="diff">Treble 60→68, Mid 40→46</div></div></div>
+<div class="center" style="margin:10px 0">● ● ○</div>
+<a href="#s4" class="btn p w">Use “Balanced” as v4</a><div style="height:8px"></div><span class="btn w">Save all 3</span>
+</div></div></section>
+
+<!-- 9a -->
+<section class="screen" id="s9a"><div class="label">9a · IR Lab — recommendations</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body">
+<div class="lt">IR Lab</div><div class="seg" style="margin-bottom:12px"><span class="on">Recommended</span><a href="#s9b"><span>Prep tool</span></a><a href="#s9c"><span>Slots</span></a></div>
+<div class="sub" style="margin-bottom:8px">For: Windowpane Clean · Twin-style clean</div>
+<div class="card"><div class="hd">Twin 2×12 C12K — SM57 cap edge</div><div class="sub">Source: free community pack · link ↗ · Captured from Fender Twin Reverb cab</div><div class="sub" style="margin-top:4px">⚠ Truncation impact: low (most energy in first 10 ms)</div><span class="btn sm" style="margin-top:8px">Open & prep →</span></div>
+<div class="card"><div class="hd">Acoustic body IR — dreadnought</div><div class="sub">Source: free pack · link ↗ · For piezo EJ-200CE</div><div class="sub" style="margin-top:4px">⚠ Truncation impact: high — body resonance &gt; 512 taps, expect less warmth</div></div>
+<div class="card"><div class="hd">Deluxe 1×12 ribbon</div><div class="sub">Source: free pack · link ↗ · Captured from Deluxe Reverb</div><div class="sub">⚠ Truncation impact: medium</div></div>
+</div><nav class="tabbar"><a href="#s1"><b>☰</b>Sessions</a><a href="#s10"><b>♡</b>Saved Tones</a><a class="on" href="#s9a"><b>〰</b>IR Lab</a><a href="#s11"><b>◯</b>Profile</a></nav></div></section>
+
+<!-- 9b -->
+<section class="screen" id="s9b"><div class="label">9b · IR prep tool</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body">
+<div class="topbar"><a href="#s9a">‹ IR Lab</a><b style="color:var(--t1)">Prep IR</b><span></span></div>
+<div class="card center" style="border-style:dashed;padding:18px">⤓ Drop WAV or tap to choose<div class="sub">twin212_57_edge.wav · 48 kHz · 200 ms</div></div>
+<div class="cap">Steps</div><div class="list">
+<div class="row"><span style="color:var(--hi)">✓</span><div class="grow">Trim silence</div></div><div class="row"><span style="color:var(--hi)">✓</span><div class="grow">Minimum-phase</div></div><div class="row"><span style="color:var(--hi)">✓</span><div class="grow">512-tap optimise</div></div><div class="row"><span>○</span><div class="grow">Blend with 2nd IR</div><div class="tog"></div></div><div class="row"><span style="color:var(--hi)">✓</span><div class="grow">Normalise −1 dBFS</div></div></div>
+<div class="cap">Frequency response</div><div class="card"><svg viewBox="0 0 320 110" width="100%"><g stroke="#2a2e44"><line x1="0" y1="55" x2="320" y2="55"/></g><path d="M0 80 C40 60 60 40 100 42 S160 30 200 48 S260 70 320 100" stroke="#9AA0B8" fill="none" stroke-width="2"/><path d="M0 82 C40 62 60 44 100 45 S160 36 200 52 S260 80 320 108" stroke="#7C6CFF" fill="none" stroke-width="2.5"/></svg><div class="sub">— original &nbsp; <span style="color:var(--ac)">— prepped (512 taps)</span> · 100 Hz – 10 kHz</div></div>
+<div class="card" style="display:flex;justify-content:space-between;align-items:center"><div><div class="hd">Fidelity 91 / 100</div><div class="sub">Suggested EQ comp: +1.5 dB @ 120 Hz, −1 dB @ 6 kHz</div></div><span class="badge b-hi">Good</span></div>
+<span class="btn p w">Export WAV</span></div></div></section>
+
+<!-- 9c -->
+<section class="screen" id="s9c"><div class="label">9c · IR slot inventory</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body">
+<div class="topbar"><a href="#s9a">‹ IR Lab</a><b style="color:var(--t1)">User IR slots</b><span>Edit</span></div>
+<div class="sub" style="margin:4px 4px 8px">Slots 35–54 · 6 used / 20</div>
+<div class="list">
+<div class="row"><b style="width:28px">35</b><div class="grow">Twin212 57 edge (prepped)<div class="sub">Fidelity 91 · used in 3 tones</div></div></div>
+<div class="row"><b style="width:28px">36</b><div class="grow">Deluxe 112 ribbon</div></div>
+<div class="row"><b style="width:28px">37</b><div class="grow">Dread body IR</div></div>
+<div class="row"><b style="width:28px">38</b><div class="grow">Jumbo body blend</div></div>
+<div class="row"><b style="width:28px">39</b><div class="grow">Mandolin body</div></div>
+<div class="row"><b style="width:28px">40</b><div class="grow">V30 412 mix</div></div>
+<div class="row"><b style="width:28px">41</b><div class="grow sub">Empty</div></div>
+<div class="row"><b style="width:28px">42</b><div class="grow sub">Empty</div></div>
+<div class="row"><b style="width:28px">…</b><div class="grow sub">43–54 empty</div></div></div></div></div></section>
+
+<!-- 10 -->
+<section class="screen" id="s10"><div class="label">10 · Saved Tones</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body">
+<div class="lt">Saved Tones</div><div class="search">⌕ Search tones, artists, songs</div>
+<div class="chips" style="flex-wrap:nowrap;overflow:auto;margin-bottom:12px"><span class="chip on">Avion AV-6 ▾</span><span class="chip">Tone type ▾</span><span class="chip">Genre ▾</span><span class="chip">Artist/Song ▾</span><span class="chip">Confidence ▾</span><span class="chip">Uses user IR</span><span class="chip">Date ▾</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<div class="card"><div class="qr" style="margin:auto"><i></i></div><div class="hd" style="margin-top:8px">Windowpane Clean</div><div class="sub">Opeth · Clean · AV-6</div><span class="badge b-hi">High</span></div>
+<div class="card"><div class="qr" style="margin:auto"><i></i></div><div class="hd" style="margin-top:8px">Edge of Breakup</div><div class="sub">Blues · AV-6 · IR 35</div><span class="badge b-med">Medium</span></div>
+<div class="card"><div class="qr" style="margin:auto"><i></i></div><div class="hd" style="margin-top:8px">Shimmer Strum</div><div class="sub">Acoustic · Jumbo King</div><span class="badge b-hi">High</span></div>
+<div class="card"><div class="qr" style="margin:auto"><i></i></div><div class="hd" style="margin-top:8px">Woody Chop</div><div class="sub">Bluegrass · Mandolin</div><span class="badge b-lo">Low</span></div></div>
+</div><nav class="tabbar"><a href="#s1"><b>☰</b>Sessions</a><a class="on" href="#s10"><b>♡</b>Saved Tones</a><a href="#s9a"><b>〰</b>IR Lab</a><a href="#s11"><b>◯</b>Profile</a></nav></div></section>
+
+<!-- 11 -->
+<section class="screen" id="s11"><div class="label">11 · Profile</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="body">
+<div class="lt">Profile</div>
+<div class="cap">Instruments</div><div class="list"><div class="row"><div class="ic">🎸</div><div class="grow">Greg Bennett Avion AV-6</div><span class="sub">›</span></div><div class="row"><div class="ic">🎸</div><div class="grow">HB Jumbo King</div><span class="sub">›</span></div><div class="row"><div class="ic">🎸</div><div class="grow">Epiphone EJ-200CE</div><span class="sub">›</span></div><div class="row"><div class="ic">🪕</div><div class="grow">HB F-style mandolin</div><span class="sub">›</span></div><div class="row" style="color:var(--ac)">＋ Add instrument</div></div>
+<div class="cap">Amp</div><div class="list"><div class="row"><div class="grow">Mighty Space firmware</div><span class="sub">v1.x ›</span></div><a href="#s9c" class="row"><div class="grow">IR slots (35–54)</div><span class="sub">6 used ›</span></a></div>
+<div class="cap">Learned preferences</div><div class="card sub">Prefers less reverb than suggested (−8 avg) · darker cleans on AV-6 · headphones most often <span style="color:var(--ac)">Reset</span></div>
+<div class="cap">AI engine</div><div class="list"><div class="row"><div class="grow">Gemini API key</div><span class="sub">••••••••••3fA2 ✎</span></div><a href="#s12" class="row"><div class="grow">Use ChatGPT / Claude handoff when no key</div><div class="tog on"></div></a></div>
+<div class="cap">Data (stored on this device)</div><div class="list"><div class="row" style="color:var(--ac)">Back up now</div><div class="row" style="color:var(--ac)">Export .json</div><div class="row" style="color:var(--ac)">Import…</div></div>
+</div><nav class="tabbar"><a href="#s1"><b>☰</b>Sessions</a><a href="#s10"><b>♡</b>Saved Tones</a><a href="#s9a"><b>〰</b>IR Lab</a><a class="on" href="#s11"><b>◯</b>Profile</a></nav></div></section>
+
+<!-- 12 -->
+<section class="screen" id="s12"><div class="label">12 · LLM handoff sheet</div><div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div><div class="dim"></div><div class="sheet">
+<div class="topbar"><a href="#s3">Cancel</a><b style="color:var(--t1)">Ask another AI</b><span></span></div>
+<div class="sub" style="margin-bottom:10px">No Gemini key set. We’ll copy a prompt; paste the answer back.</div>
+<div class="row2"><span class="btn p" style="flex:1">Ask ChatGPT ↗</span><span class="btn p" style="flex:1">Ask Claude ↗</span></div>
+<div class="cap">Copied prompt ✓</div><div class="field diff" style="height:150px;overflow:hidden">You are a NUX Mighty Space tone assistant. Instrument: Greg Bennett Avion AV-6, neck humbucker, standard tuning, headphones. Request: "Opeth Windowpane clean, dark and sparkly". Reply ONLY with JSON matching schema v1: {blocks:[…9]}…</div>
+<div class="cap">Paste answer</div><div class="field" style="height:110px">Paste the JSON reply here…</div>
+<div style="height:12px"></div><a href="#s3" class="btn w">Build tone from reply</a></div></div></section>
+
+<!-- 13 desktop -->
+<section class="screen" id="s13"><div class="label">Mac / desktop · Tone chat (three-pane)</div><div class="desk">
+<div><div class="t2">Sessions</div><div class="search" style="margin-top:10px">⌕ Search</div>
+<div class="row" style="background:rgba(124,108,255,.15);border-radius:10px">🎸 Opeth cleans</div><div class="row">🪕 Bluegrass practice</div><div class="row">🎸 Campfire strum</div><div class="row">🎸 Church set</div>
+<div class="cap">Library</div><div class="row">♡ Saved Tones</div><div class="row">〰 IR Lab</div><div class="row">◯ Profile</div></div>
+<div><div class="hd">Opeth cleans <span class="sub">· Avion AV-6 · Neck · Headphones</span></div>
+<div class="bubble me" style="max-width:60%">Opeth Windowpane clean, dark and sparkly</div><div class="bubble ai" style="max-width:60%">Starting patch: Twin-style clean, CE-2 chorus, analog delay, long hall.</div>
+<div class="bubble me" style="max-width:60%">A bit muddy and too wet</div><div class="bubble ai" style="max-width:60%">v3: Bass 50→42, Reverb mix 30→22. Delay locked.</div>
+<div class="composer" style="padding-bottom:12px"><div class="input">Describe a tone or give feedback…  🎙</div><span class="btn sm">Feedback chips</span><span class="btn sm p">Send ↑</span></div></div>
+<div><div class="card glow"><div style="display:flex;gap:12px"><div class="qr lg" style="width:120px;height:120px"><i></i></div><div><div class="hd">Windowpane Clean ✎</div><span class="badge b-med">● Medium</span><div class="sub" style="margin-top:4px">Rig info solid; different guitar; no exact studio reverb.</div></div></div>
+<div class="row2" style="margin-top:10px;flex-wrap:wrap"><span class="btn sm">Save</span><span class="btn sm">Variants</span><span class="btn sm">Share QR</span></div></div>
+<div class="cap">Signal chain</div><div class="chain" style="flex-wrap:wrap"><span class="blk off">Gate</span><span class="blk off">Comp</span><span class="blk off">EFX</span><span class="blk on">Twin Rvb</span><span class="blk on">TR212</span><span class="blk off">EQ</span><span class="blk on">CE-2</span><span class="blk on">Analog</span><span class="blk on">Hall</span></div>
+<div class="cap">Versions</div><div class="tl"><div class="v"><div class="dot"></div>v1</div><div class="v"><div class="dot"></div>v2</div><div class="v on"><div class="dot"></div>v3</div></div><div class="diff">Reverb mix 30→22, Bass 50→42</div></div>
+</div></section>
+
+</div></body></html>

@@ -1,0 +1,9 @@
+.DS_Store
+.venv/
+node_modules/
+dist/
+coverage/
+*.log
+
+# Third-party reference clones (MIT, read locally by tools/extract-plugpro.ts; see mighty-tone/docs/SOURCES.md)
+.research/
