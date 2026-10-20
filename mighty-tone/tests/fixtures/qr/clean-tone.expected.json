@@ -1,0 +1,162 @@
+{
+  "$comment": "confirmed = what the MightyAmp app screenshot shows (user-provided); decoded = full decode pinned as a regression snapshot (block names/values beyond \"confirmed\" are not independently verified).",
+  "fixture": "clean-tone",
+  "title": "Clean tone",
+  "source": {
+    "device": "NUX Mighty Space",
+    "firmware": "20230331",
+    "app": "MightyAmp iOS 3.6.6",
+    "exportedAt": "2026-10-20",
+    "qrImage": "clean-tone.png",
+    "screenshot": "../screens/preset3-amp-MLD.png"
+  },
+  "preset": {
+    "slot": 3,
+    "mapping": "verified-by-decode",
+    "evidence": "Decoded model, every knob value and the chain order match the screenshot of this preset exactly."
+  },
+  "notes": "MLD (nuxIndex 27) is listed after AGL in the reference \"Bass\" category, but the user uses it as a guitar clean tone.",
+  "confirmed": {
+    "chain": [
+      "gate",
+      "comp",
+      "eq",
+      "efx",
+      "amp",
+      "cab",
+      "mod",
+      "dly",
+      "rvb"
+    ],
+    "blocks": {
+      "amp": {
+        "model": "MLD",
+        "params": {
+          "Gain": "30",
+          "Master": "80",
+          "Bass": "86",
+          "Mid Freq": "8",
+          "Middle": "17",
+          "Treble": "35"
+        }
+      }
+    }
+  },
+  "decoded": {
+    "name": "",
+    "masterDb": -12,
+    "chain": [
+      "gate",
+      "comp",
+      "eq",
+      "efx",
+      "amp",
+      "cab",
+      "mod",
+      "dly",
+      "rvb"
+    ],
+    "blocks": {
+      "gate": {
+        "model": "Noise Gate",
+        "modelId": "gate.noise-gate",
+        "enabled": false,
+        "params": {
+          "Sensitivity": "50",
+          "Decay": "50"
+        }
+      },
+      "comp": {
+        "model": "Studio Comp",
+        "modelId": "comp.studio-comp",
+        "enabled": true,
+        "params": {
+          "Gain": "20",
+          "Threshold": "10",
+          "Ratio": "0",
+          "Release": "60"
+        }
+      },
+      "efx": {
+        "model": "RC Boost",
+        "modelId": "efx.rc-boost",
+        "enabled": true,
+        "params": {
+          "Volume": "80",
+          "Gain": "15",
+          "Bass": "27",
+          "Treble": "30"
+        }
+      },
+      "amp": {
+        "model": "MLD",
+        "modelId": "amp.mld",
+        "enabled": true,
+        "params": {
+          "Gain": "30",
+          "Master": "80",
+          "Bass": "86",
+          "Mid Freq": "8",
+          "Middle": "17",
+          "Treble": "35"
+        }
+      },
+      "eq": {
+        "model": "6-Band",
+        "modelId": "eq.6-band",
+        "enabled": true,
+        "params": {
+          "100": "-1.8",
+          "220": "-4.5",
+          "500": "-5.4",
+          "1.2K": "2.1",
+          "2.6K": "0.9",
+          "6.4K": "3.0"
+        }
+      },
+      "mod": {
+        "model": "S.C.F.",
+        "modelId": "mod.s-c-f",
+        "enabled": true,
+        "params": {
+          "Speed": "11",
+          "Width": "25",
+          "Intensity": "82",
+          "Mode": "Chorus"
+        }
+      },
+      "dly": {
+        "model": "Digital Delay",
+        "modelId": "dly.digital-delay",
+        "enabled": true,
+        "params": {
+          "E.Level": "5",
+          "Time": "692",
+          "Feedback": "36"
+        }
+      },
+      "rvb": {
+        "model": "Hall",
+        "modelId": "rvb.hall",
+        "enabled": true,
+        "params": {
+          "Level": "20",
+          "Decay": "70",
+          "Pre Delay": "6",
+          "Liveliness": "40"
+        }
+      },
+      "cab": {
+        "model": "MKB410",
+        "modelId": "cab.mkb410",
+        "enabled": true,
+        "params": {
+          "Level": "0",
+          "Low Cut": "48",
+          "High Cut": "20000"
+        }
+      }
+    },
+    "warnings": []
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "$comment": "confirmed = what the MightyAmp app screenshot shows (user-provided); decoded = full decode pinned as a regression snapshot (block names/values beyond \"confirmed\" are not independently verified).",
+  "fixture": "gain-responsive-distortion",
+  "title": "Responsive gain distortion",
+  "source": {
+    "device": "NUX Mighty Space",
+    "firmware": "20230331",
+    "app": "MightyAmp iOS 3.6.6",
+    "exportedAt": "2026-10-20",
+    "qrImage": "gain-responsive-distortion.png",
+    "screenshot": "../screens/preset1-amp-1987x50.png"
+  },
+  "preset": {
+    "slot": 1,
+    "mapping": "verified-by-decode",
+    "evidence": "Decoded model, every knob value and the chain order match the screenshot of this preset exactly."
+  },
+  "notes": "App labels the amp \"1987 X 50\"; the reference code names it \"1987x50\" (nuxIndex 13).",
+  "confirmed": {
+    "chain": [
+      "gate",
+      "comp",
+      "efx",
+      "amp",
+      "cab",
+      "eq",
+      "mod",
+      "dly",
+      "rvb"
+    ],
+    "blocks": {
+      "amp": {
+        "model": "1987x50",
+        "params": {
+          "Gain": "75",
+          "Master": "60",
+          "Bass": "50",
+          "Middle": "67",
+          "Treble": "64",
+          "Presence": "61"
+        }
+      }
+    }
+  },
+  "decoded": {
+    "name": "",
+    "masterDb": -12,
+    "chain": [
+      "gate",
+      "comp",
+      "efx",
+      "amp",
+      "cab",
+      "eq",
+      "mod",
+      "dly",
+      "rvb"
+    ],
+    "blocks": {
+      "gate": {
+        "model": "Noise Gate",
+        "modelId": "gate.noise-gate",
+        "enabled": false,
+        "params": {
+          "Sensitivity": "35",
+          "Decay": "20"
+        }
+      },
+      "comp": {
+        "model": "K Comp",
+        "modelId": "comp.k-comp",
+        "enabled": true,
+        "params": {
+          "Level": "70",
+          "Sustain": "22",
+          "Clipping": "65"
+        }
+      },
+      "efx": {
+        "model": "Eat Dist",
+        "modelId": "efx.eat-dist",
+        "enabled": true,
+        "params": {
+          "Volume": "50",
+          "Distortion": "50",
+          "Filter": "19"
+        }
+      },
+      "amp": {
+        "model": "1987x50",
+        "modelId": "amp.1987x50",
+        "enabled": true,
+        "params": {
+          "Gain": "75",
+          "Master": "60",
+          "Bass": "50",
+          "Middle": "67",
+          "Treble": "64",
+          "Presence": "61"
+        }
+      },
+      "eq": {
+        "model": "10-Band",
+        "modelId": "eq.10-band",
+        "enabled": true,
+        "params": {
+          "31": "3.9",
+          "62": "5.7",
+          "125": "6.0",
+          "250": "0.3",
+          "500": "0.6",
+          "Vol": "1.8",
+          "1K": "0.0",
+          "2K": "0.0",
+          "4K": "0.0",
+          "8K": "0.0",
+          "16K": "0.0"
+        }
+      },
+      "mod": {
+        "model": "Phase 100",
+        "modelId": "mod.phase-100",
+        "enabled": true,
+        "params": {
+          "Speed": "73",
+          "Intensity": "27"
+        }
+      },
+      "dly": {
+        "model": "Digital Delay",
+        "modelId": "dly.digital-delay",
+        "enabled": false,
+        "params": {
+          "E.Level": "26",
+          "Time": "692",
+          "Feedback": "2"
+        }
+      },
+      "rvb": {
+        "model": "Hall",
+        "modelId": "rvb.hall",
+        "enabled": true,
+        "params": {
+          "Level": "38",
+          "Decay": "80",
+          "Pre Delay": "50",
+          "Liveliness": "80"
+        }
+      },
+      "cab": {
+        "model": "M1960TV",
+        "modelId": "cab.m1960tv",
+        "enabled": true,
+        "params": {
+          "Level": "1",
+          "Low Cut": "20",
+          "High Cut": "20000"
+        }
+      }
+    },
+    "warnings": []
+  }
+}

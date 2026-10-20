@@ -1,0 +1,157 @@
+{
+  "$comment": "confirmed = what the MightyAmp app screenshot shows (user-provided); decoded = full decode pinned as a regression snapshot (block names/values beyond \"confirmed\" are not independently verified).",
+  "fixture": "acoustic-ir-tone",
+  "title": "Acoustic IR tone",
+  "source": {
+    "device": "NUX Mighty Space",
+    "firmware": "20230331",
+    "app": "MightyAmp iOS 3.6.6",
+    "exportedAt": "2026-10-20",
+    "qrImage": "acoustic-ir-tone.png",
+    "screenshot": "../screens/preset4-ir-Dread-35-SR25-Pz1.png"
+  },
+  "preset": {
+    "slot": 4,
+    "mapping": "verified-by-decode",
+    "evidence": "Decoded model, every knob value and the chain order match the screenshot of this preset exactly."
+  },
+  "notes": "The app shows the user IR name \"Dread-35 SR25 Pz1\"; the QR payload stores only the slot (cab nuxIndex 37 = user IR slot 3), never the name. Slot 3 is the decoded value, not visible in the screenshot.",
+  "confirmed": {
+    "chain": [
+      "gate",
+      "eq",
+      "cab",
+      "comp",
+      "mod",
+      "efx",
+      "amp",
+      "dly",
+      "rvb"
+    ],
+    "blocks": {
+      "cab": {
+        "params": {
+          "Level": "6",
+          "Low Cut": "31",
+          "High Cut": "14142"
+        }
+      }
+    }
+  },
+  "decoded": {
+    "name": "",
+    "masterDb": -12,
+    "chain": [
+      "gate",
+      "eq",
+      "cab",
+      "comp",
+      "mod",
+      "efx",
+      "amp",
+      "dly",
+      "rvb"
+    ],
+    "blocks": {
+      "gate": {
+        "model": "Noise Gate",
+        "modelId": "gate.noise-gate",
+        "enabled": false,
+        "params": {
+          "Sensitivity": "15",
+          "Decay": "40"
+        }
+      },
+      "comp": {
+        "model": "K Comp",
+        "modelId": "comp.k-comp",
+        "enabled": false,
+        "params": {
+          "Level": "50",
+          "Sustain": "30",
+          "Clipping": "15"
+        }
+      },
+      "efx": {
+        "model": "Katana",
+        "modelId": "efx.katana",
+        "enabled": true,
+        "params": {
+          "Volume": "50",
+          "Boost": "Off"
+        }
+      },
+      "amp": {
+        "model": "Dual Rect",
+        "modelId": "amp.dual-rect",
+        "enabled": false,
+        "params": {
+          "Gain": "63",
+          "Master": "35",
+          "Bass": "54",
+          "Middle": "70",
+          "Treble": "56",
+          "Presence": "90"
+        }
+      },
+      "eq": {
+        "model": "10-Band",
+        "modelId": "eq.10-band",
+        "enabled": true,
+        "params": {
+          "31": "2.1",
+          "62": "5.4",
+          "125": "-2.4",
+          "250": "-2.4",
+          "500": "5.7",
+          "Vol": "7.2",
+          "1K": "1.2",
+          "2K": "-3.9",
+          "4K": "-3.3",
+          "8K": "1.8",
+          "16K": "3.3"
+        }
+      },
+      "mod": {
+        "model": "CE-2",
+        "modelId": "mod.ce-2",
+        "enabled": false,
+        "params": {
+          "Rate": "10",
+          "Depth": "50"
+        }
+      },
+      "dly": {
+        "model": "Analog",
+        "modelId": "dly.analog",
+        "enabled": true,
+        "params": {
+          "Intensity": "10",
+          "Rate": "321",
+          "Echo": "15"
+        }
+      },
+      "rvb": {
+        "model": "Plate",
+        "modelId": "rvb.plate",
+        "enabled": true,
+        "params": {
+          "Level": "8",
+          "Decay": "20"
+        }
+      },
+      "cab": {
+        "model": "User IR 3",
+        "modelId": "cab.user-ir-3",
+        "enabled": true,
+        "params": {
+          "Level": "6",
+          "Low Cut": "31",
+          "High Cut": "14142"
+        },
+        "userIrSlot": 3
+      }
+    },
+    "warnings": []
+  }
+}
