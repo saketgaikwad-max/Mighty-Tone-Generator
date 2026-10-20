@@ -4,7 +4,7 @@ Owner: QA agent. Every requirement from the agreed product summary maps to phase
 (ARCHITECTURE.md §1) and an acceptance test. Test ID prefixes: `UNIT-` (Vitest), `PROP-` (fast-check), `GOLD-`
 (real-fixture golden), `EVAL-` (engine evaluation suite), `E2E-` (Playwright WebKit/Chromium), `DSP-`, `LLM-`,
 `MAN-` (manual/user checkpoint), `DOC-` (doc review). Status column is filled by QA at each gate
-(`todo` / `pass` / `waived:<ADR>`).
+(`todo` / `pass` / `waived:<ADR>`; `partial:` lists which tests pass and which slice owns the rest).
 
 ## Platform, hosting, maintainability
 
@@ -24,7 +24,7 @@ Owner: QA agent. Every requirement from the agreed product summary maps to phase
 
 | ID | Requirement | Phase / task | Module | Acceptance test | Status |
 | --- | --- | --- | --- | --- | --- |
-| R10 | Target NUX Mighty Space, firmware 20230331 (Plug Pro protocol) | P0.4, P1.2 | knowledge/device, codec | GOLD-001 all user fixtures decode; profile default firmware `20230331` UNIT-PROF-01 | todo |
+| R10 | Target NUX Mighty Space, firmware 20230331 (Plug Pro protocol) | P0.4, P1.2 | knowledge/device, codec | GOLD-001 all user fixtures decode; profile default firmware `20230331` UNIT-PROF-01 | partial: GOLD-001 pass (S1); UNIT-PROF-01 in S3 |
 | R11 | Generated QR loads in MightyAmp iOS 3.6.6 | P1 G1 | codec, qr | MAN-U3 scan re-encoded fixtures; MAN-U4 scan engine patches | todo |
 | R12 | Mighty Editor (Mac) is the user-IR loading path | P5.4 | ui/IR | DOC-004 in-app instructions; MAN-U7 | todo |
 | R13 | Avion AV-6 profile: LP-style, HB101N neck/HB102B bridge, 3-way, 2 vol/2 tone | P2.2 | knowledge/instruments | UNIT-INST-01 profile fields; EVAL-INST-AV (neck vs bridge produce different shaping) | todo |
@@ -64,7 +64,7 @@ Owner: QA agent. Every requirement from the agreed product summary maps to phase
 | --- | --- | --- | --- | --- | --- |
 | R38 | Profile: instruments | P3.7 | store, ui | E2E-010 | todo |
 | R39 | Profile: amp firmware | P3.7 | store | UNIT-PROF-01; firmware ≠ 20230331 shows warning | todo |
-| R40 | IR slot inventory: 20 user slots = nuxIndex 35–54 | P3.7, P5.4 | store, knowledge | UNIT-IR-01 slot n ↔ index n+34; GOLD-004 user-IR fixture decodes to correct slot | todo |
+| R40 | IR slot inventory: 20 user slots = nuxIndex 35–54 | P3.7, P5.4 | store, knowledge | UNIT-IR-01 slot n ↔ index n+34; GOLD-004 user-IR fixture decodes to correct slot | partial: UNIT-IR-01, GOLD-004 pass (S1); store/inventory in S3 |
 | R41 | Playing context | P3.7 | store, engine | EVAL-CTX-01 home vs band produce documented differences | todo |
 | R42 | Learned preferences | P3.8 | store, engine | EVAL-LRN-01 repeated "harsh" on Avion bridge → bounded bias applied + explained | todo |
 | R43 | Gemini key stored on device | P3.7, P4.2 | store, llm | UNIT-LLM-01 key only in IndexedDB; excluded from backup by default; never logged | todo |
@@ -76,7 +76,7 @@ Owner: QA agent. Every requirement from the agreed product summary maps to phase
 | ID | Requirement | Phase / task | Module | Acceptance test | Status |
 | --- | --- | --- | --- | --- | --- |
 | R46 | Master volume level matching across patches | P2.4 | engine/level | EVAL-LVL-01 estimated loudness spread ≤ target band across 20 diverse patches; "louder/quieter" chip adjusts offset | todo |
-| R47 | Delay helper: type + BPM + division → ms → nearest device value | P2.5 | engine/delay | UNIT-DLY-01 (100 BPM dotted 1/8 = 450 ms → Digital raw 46 ≈ 448 ms); UNIT-DLY-02 all models' ranges | todo |
+| R47 | Delay helper: type + BPM + division → ms → nearest device value | P2.5 | engine/delay | UNIT-DLY-01 (100 BPM dotted 1/8 = 450 ms → Digital raw 46 ≈ 448 ms); UNIT-DLY-02 all models' ranges | partial: nearest-byte math (DLY-01 case) pass in codec (S1); helper API in S4 |
 | R48 | Changing only BPM on existing patch works | P2.5 | engine/delay | UNIT-DLY-03 only the time byte changes | todo |
 | R49 | Out-of-range handling (e.g., Analog max ~401 ms) | P2.5 | engine/delay | UNIT-DLY-04 suggests division change or model switch | todo |
 | R50 | Tap tempo in NUX app as alternative | P2.5 | ui | DOC-005 helper text shown | todo |
@@ -135,18 +135,18 @@ Owner: QA agent. Every requirement from the agreed product summary maps to phase
 
 | ID | Requirement | Phase / task | Module | Acceptance test | Status |
 | --- | --- | --- | --- | --- | --- |
-| R81 | Use all 29 amps incl. 8 hidden ones | P0.4, P2.3 | knowledge, engine/plan | UNIT-KN-02 counts; EVAL-HID-01 hidden amps selected when best fit; MAN-U3/U4 hidden-amp patch loads | todo |
-| R82 | 34 cabs incl. Acoustic IR G-HBIRD(32)/G-J15(33)/M-D45(34), favoured for magnetic pickups | P0.4, P2.3 | knowledge, engine | UNIT-KN-03; EVAL-ACIR-01 neck single coil + acoustic intent → acoustic IR | todo |
-| R83 | QR payload `nux://MightyAmp:` + base64([0x0F,0x01]+113 bytes) | P1.2 | codec | GOLD-001; PROP-CODEC-01 | todo |
-| R84 | `.mspatch` 8404 bytes, preset at offset 4 | P1.2 | codec | UNIT-CODEC-02 matches converter.js | todo |
-| R85 | Byte map: heads 1–9 low 6 bits + 0x40 OFF; params; MASTER 84; chain 89+; name 100+ | P1.2 | codec | GOLD-001; UNIT-CODEC-03 per field | todo |
-| R86 | Unused/undocumented bytes preserved (85–87 delay flags/BPM, etc.) | P1.2 | codec | GOLD-006 decode→encode byte-identical | todo |
-| R87 | Param ranges/formatters (cab level ±12 dB, low cut 20–300 Hz, high cut 5–20 kHz log, EQ ±15 dB 6/10-band) | P1.1 | codec/formatters | UNIT-FMT-* vs Dart formulas | todo |
-| R88 | Delay model time ranges (Analog 40–401, Digital/Pan/Phi 80–990, Mod 18–1192, Tape 53–546 ms) | P1.1 | knowledge/device | UNIT-DLY-02 | todo |
-| R89 | QR decode of user-supplied screenshots must work | P1.3, P3.2 | qr | GOLD-003 all fixture screenshots (incl. app chrome) decode; E2E-021 | todo |
-| R90 | Golden fixtures: user exports 3–5 real QR codes (clean, high-gain, delay+reverb) | P0.6 | tests/fixtures | MAN-U1; GOLD-001 | todo |
+| R81 | Use all 29 amps incl. 8 hidden ones | P0.4, P2.3 | knowledge, engine/plan | UNIT-KN-02 counts; EVAL-HID-01 hidden amps selected when best fit; MAN-U3/U4 hidden-amp patch loads | partial: UNIT-KN-02 pass (S1); EVAL-HID-01 (S2), MAN-U3/U4 todo |
+| R82 | 34 cabs incl. Acoustic IR G-HBIRD(32)/G-J15(33)/M-D45(34), favoured for magnetic pickups | P0.4, P2.3 | knowledge, engine | UNIT-KN-03; EVAL-ACIR-01 neck single coil + acoustic intent → acoustic IR | partial: UNIT-KN-03 pass (S1); EVAL-ACIR-01 in S2 |
+| R83 | QR payload `nux://MightyAmp:` + base64([0x0F,0x01]+113 bytes) | P1.2 | codec | GOLD-001; PROP-CODEC-01 | pass (S1) |
+| R84 | `.mspatch` 8404 bytes, preset at offset 4 | P1.2 | codec | UNIT-CODEC-02 matches converter.js | pass (S1) |
+| R85 | Byte map: heads 1–9 low 6 bits + 0x40 OFF; params; MASTER 84; chain 89+; name 100+ | P1.2 | codec | GOLD-001; UNIT-CODEC-03 per field | pass (S1) |
+| R86 | Unused/undocumented bytes preserved (85–87 delay flags/BPM, etc.) | P1.2 | codec | GOLD-006 decode→encode byte-identical | pass (S1) |
+| R87 | Param ranges/formatters (cab level ±12 dB, low cut 20–300 Hz, high cut 5–20 kHz log, EQ ±15 dB 6/10-band) | P1.1 | codec/formatters | UNIT-FMT-* vs Dart formulas | pass (S1) |
+| R88 | Delay model time ranges (Analog 40–401, Digital/Pan/Phi 80–990, Mod 18–1192, Tape 53–546 ms) | P1.1 | knowledge/device | UNIT-DLY-02 | pass (S1) |
+| R89 | QR decode of user-supplied screenshots must work | P1.3, P3.2 | qr | GOLD-003 all fixture screenshots (incl. app chrome) decode; E2E-021 | partial: GOLD-003 pass in Node/jsQR (S1); WebKit + E2E-021 in S2/S3 |
+| R90 | Golden fixtures: user exports 3–5 real QR codes (clean, high-gain, delay+reverb) | P0.6 | tests/fixtures | MAN-U1; GOLD-001 | pass (S1: 3 fixtures) |
 | R91 | Optional extra fixtures from mightypatches.com | P1.4 | tests/fixtures | GOLD-007 (optional; license note per file) | todo |
-| R92 | MIT licensing/attribution for derived data | P0.3 | docs | DOC-006 THIRD_PARTY_NOTICES + provenance fields; UNIT-KN-04 every model has `source` | todo |
+| R92 | MIT licensing/attribution for derived data | P0.3 | docs | DOC-006 THIRD_PARTY_NOTICES + provenance fields; UNIT-KN-04 every model has `source` | pass (S1: THIRD_PARTY_NOTICES, UNIT-KN-04) |
 | R93 | ChopTones IRs not used until verified | P0.4 | knowledge | UNIT-KN-05 unverified models excluded from engine | todo |
 
 ## Process, user checkpoints, scope

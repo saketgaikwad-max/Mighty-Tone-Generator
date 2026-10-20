@@ -18,18 +18,20 @@ Full plan: `PLAN.md`, `ARCHITECTURE.md`, `AGENTS.md`, `ESTIMATES.md`, `TRACEABIL
 - Prefer automated tests over agent review; keep messages short.
 
 ## Slice order (MVP first)
-1. S1 Data + codec: extract amp model/param JSON; QR/.mspatch encode/decode; round-trip tests on user fixture QRs. (needs user QR exports in `/Users/saket.gaikwad/Guitar`)
+1. S1 Data + codec: **DONE 2026-10-20** (see `STATUS.md`, `DECISIONS.md`). `knowledge/device/mighty-space.json` (generated; re-run `npm run extract`), `src/codec/*`, `src/qr/decode-image.ts`, fixtures in `tests/fixtures/`. `npm run verify` = typecheck + Vitest (ESLint arrives with S2, ADR-001).
 2. S2 Minimal app: instrument pick, prompt, engine v1 (vocabulary + instrument rules for clean/crunch/lead/high-gain/acoustic/mandolin), QR output, feedback chips, QR import, local save. Deploy to Pages.
 3. S3 Versions timeline, saved-tones filters, profile, backup.
 4. S4 Delay helper, variants, lock-block, references library + Gemini/handoff.
 5. S5 IR Lab (prep tool + guided flow + slot inventory).
 
-## Fixtures (in `/Users/saket.gaikwad/Guitar/fixtures/`, confirmed by user)
-- `gain-responsive-distortion-qr.png` = preset 1, amp 1987 X 50 (Gain 75, Master 60, Bass 50, Middle 67, Treble 64, Presence 61) — `preset1-amp-1987x50.png`.
-- `clean-tone-qr.png` = preset 3, amp MLD (Gain 30, Master 80, Bass 86, Mid Freq 8, Middle 17, Treble 35) — `preset3-amp-MLD.png`.
-- `acoustic-ir-tone-qr.png` = preset 4, user IR "Dread-35 SR25 Pz1" (Level 6 dB, Low Cut 31 Hz, High Cut 14142 Hz) — `preset4-ir-Dread-35-SR25-Pz1.png`.
-- Chain order differs per preset (visible in screenshots). No delay-ms fixture yet; calibrate in S4.
+## Fixtures (copied to `tests/fixtures/`; originals in `/Users/saket.gaikwad/Guitar/fixtures/`)
+QR-to-preset mapping **verified by decoding the payloads** (ADR-005): model, every knob and chain order match exactly.
+- `qr/gain-responsive-distortion` = preset 1, amp 1987 X 50 (Gain 75, Master 60, Bass 50, Middle 67, Treble 64, Presence 61).
+- `qr/clean-tone` = preset 3, amp MLD (Gain 30, Master 80, Bass 86, Mid Freq 8, Middle 17, Treble 35).
+- `qr/acoustic-ir-tone` = preset 4, cab = user IR slot 3 (app name "Dread-35 SR25 Pz1"; QR stores only the slot), Level 6 dB, Low Cut 31 Hz, High Cut 14142 Hz.
+- Chain order differs per preset and decodes correctly. Official exports have empty name bytes and master byte 0 (open question in DECISIONS.md). No delay-ms fixture yet; the clean fixture's Digital Delay decodes to ≈692 ms (cheap check for R51).
 
 ## Open items
-- Delay-time calibration fixture (later).
+- Delay-time calibration fixture (later), or confirm preset 3 DLY shows ≈692 ms.
+- Master byte 0 / empty name in official QR exports: settle at U3 (needs QR render from S2).
 - Rotate GitHub token at end.

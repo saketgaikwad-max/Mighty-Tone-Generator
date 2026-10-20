@@ -20,7 +20,16 @@ Paths below are relative to that folder.
 | S13 | Gemini API free tier: Grounding with Google Search free up to 500 RPD for 2.5 Flash (shared with Flash-Lite); Gemini 3+ grounding billed per search query; free-tier content "used to improve our products"; RPD resets at midnight Pacific; limits per project | https://ai.google.dev/gemini-api/docs/pricing (updated 2026-10-16), https://ai.google.dev/gemini-api/docs/google-search, https://ai.google.dev/gemini-api/docs/rate-limits |
 | S14 | iOS Home Screen web apps: storage separate from Safari; not subject to ITP 7-day eviction; best-effort eviction under pressure unless `navigator.storage.persist()` granted (heuristic) | https://bugs.webkit.org/show_bug.cgi?id=181849, https://webkit.org/blog/14403/updates-to-storage-policy/, https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria |
 
+Facts verified against the user's real exports (`tests/fixtures/`, 2026-10-20):
+
+| ID | Fact | Evidence |
+| --- | --- | --- |
+| S15 | The Plug Pro byte map, head encoding, 9-slot chain at 89 (offset 0) and QR header `[15, 1]` hold for Mighty Space firmware 20230331 / MightyAmp iOS 3.6.6 | 3 fixtures decode with zero warnings, match the app screenshots, and re-encode byte-identically (GOLD-001/006) |
+| S16 | High cut knob 75 = 14142 Hz; cab level 75 = +6 dB; low cut raw 4 = 31 Hz | `acoustic-ir-tone` fixture vs preset 4 screenshot |
+| S17 | User IR cab index 37 = user slot 3; the QR payload stores only the slot, not the IR name | `acoustic-ir-tone` fixture |
+| S18 | Official exports leave name bytes 100–112 empty and master byte 84 = 0 | all 3 fixtures |
+
 Facts given by the user and **not independently verified** in this planning pass (treat as `verified: false` until a
 fixture or user test confirms): user IR truncation to 512 samples @ 48 kHz; IRs loaded only via Mighty Editor
 desktop; Acoustic IR cabs designed by NUX for magnetic pickups; 7 preset slots on the amp; NUX "ChopTones Custom IRs"
-(Bogna-T75, BritJH-G) existence and indexes; firmware 20230331 matching the Plug Pro map.
+(Bogna-T75, BritJH-G) existence and indexes; firmware 20230331 matching the Plug Pro map (now confirmed for the fields the fixtures exercise, see S15).
