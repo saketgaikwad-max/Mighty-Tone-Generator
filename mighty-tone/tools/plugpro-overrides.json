@@ -1,0 +1,10 @@
+{
+  "$comment": "Facts not derivable from the Dart sources. hiddenAmpNuxIndexes: amps defined after Stageman in Amps.dart, reported hidden in the official MightyAmp app (user statement, unverified). verified: model id -> evidence (real fixture or user scan).",
+  "hiddenAmpNuxIndexes": [5, 8, 18, 19, 22, 23, 24, 25],
+  "hiddenAmpNote": "Hidden in the official MightyAmp app (reported); selectable via QR. Unverified on firmware 20230331 until a fixture or U3 scan confirms.",
+  "verified": {
+    "amp.1987x50": "fixture gain-responsive-distortion + app screenshot of preset 1 (model, 6 knobs, chain order)",
+    "amp.mld": "fixture clean-tone + app screenshot of preset 3 (model incl. Mid Freq, 6 knobs, chain order)",
+    "cab.user-ir-3": "fixture acoustic-ir-tone + app screenshot of preset 4 (Level 6 dB, Low Cut 31 Hz, High Cut 14142 Hz, chain order)"
+  }
+}
