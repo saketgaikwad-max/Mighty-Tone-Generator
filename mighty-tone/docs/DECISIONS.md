@@ -35,11 +35,11 @@ so the mapping is recorded as `verified-by-decode` in each `expected.json`.
 `src/contracts/blocks.ts` holds `BLOCK_KINDS` so the codec and knowledge accessors stay Zod-free; the Zod schema in
 `src/contracts/device.ts` validates the knowledge JSON in tests (UNIT-KN-01). Keeps the initial bundle small.
 
-## ADR-007 (S1): Dev dependency versions; lockfile pending
-S1 was verified with vitest 5.0.5, typescript 6.0.3, zod 4.6.7, fast-check 4.10.2, jsqr 1.4.0, pngjs 7.0.0, which
-`package.json` now declares. TypeScript 6 deprecates `baseUrl`, so `tsconfig.json` uses `paths` only. No
-`package-lock.json` is committed yet: registry access was too slow for `npm install` to finish during S1. The first
-clean `npm install` (S2 at the latest) must commit the lockfile.
+## ADR-007 (S1): Dev dependency versions follow the committed lockfile
+`package-lock.json` comes from the first `npm install` that completed: vitest 3.2.7, typescript 5.9.3, zod 4.6.7,
+fast-check 4.10.2, jsqr 1.4.0, pngjs 7.0.0, @types/node 24.19.2. `npm run verify` passes on it. The suite also
+passed on vitest 5.0.5 / typescript 6.0.3 from a partial install, so upgrading later is low risk. `tsconfig.json`
+uses `paths` without `baseUrl` (deprecated in TypeScript 6). Use `npm ci` for reproducible installs.
 
 ## Open questions (need a user check or later fixture)
 - **Master byte 84 is 0 in all three official-app exports** (= −12 dB by the Plug Pro formatter). Unknown whether
