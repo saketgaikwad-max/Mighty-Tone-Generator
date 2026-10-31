@@ -3,8 +3,11 @@ import { describePatch } from '../codec/describe.ts';
 import { decodePreset } from '../codec/preset.ts';
 import { parseQrString } from '../codec/qr-string.ts';
 import { decodeQrImage, type RgbaImage } from '../qr/decode-image.ts';
-import { db } from '../store/db.ts';
+import { db, createSession, saveTone } from '../store/db.ts';
 import { exportBackup, importBackup } from '../services/backup.ts';
+import { solve } from '../engine/solve.ts';
+import { buildHandoffPrompt, parseHandoffResponse } from '../llm/handoff.ts';
+import type { ToneMeta } from '../engine/index.ts';
 
 const INSTRUMENTS = [
   { id: 'electric-single-coil', label: 'Single Coil' },
@@ -35,6 +38,11 @@ export function Profile() {
     localStorage.getItem('default-instrument') ?? 'electric-single-coil',
   );
   const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [handoffPrompt, setHandoffPrompt] = useState('');
+  const [handoffInstrument, setHandoffInstrument] = useState('');
+  const [handoffGeneratedPrompt, setHandoffGeneratedPrompt] = useState('');
+  const [handoffPasted, setHandoffPasted] = useState('');
+  const [handoffMsg, setHandoffMsg] = useState<string | null>(null);
 
   async function handleFile(file: File) {
     const bitmap = await createImageBitmap(file);
@@ -96,6 +104,29 @@ export function Profile() {
       await exportBackup();
     } catch (err) {
       alert(`Export failed: ${String(err)}`);
+    }
+  }
+
+  function handleBuildHandoffPrompt() {
+    const p = buildHandoffPrompt(handoffPrompt, handoffInstrument || undefined);
+    setHandoffGeneratedPrompt(p);
+  }
+
+  async function handleHandoffPaste() {
+    const intent = parseHandoffResponse(handoffPasted);
+    if (!intent) {
+      setHandoffMsg('Could not parse response. Make sure it is valid JSON with archetype, descriptors, deltas.');
+      return;
+    }
+    try {
+      const { patch, ruleTrace, archetype, confidence } = solve(intent);
+      const meta: ToneMeta = { archetype, ruleTrace, confidence, unknownTerms: intent.unknownTerms };
+      const session = await createSession(`Handoff: ${archetype}`);
+      await saveTone(session.id!, patch, meta);
+      setHandoffMsg(`Saved tone: ${archetype} (confidence ${Math.round(confidence * 100)}%)`);
+      setHandoffPasted('');
+    } catch (err) {
+      setHandoffMsg(`Error saving tone: ${String(err)}`);
     }
   }
 
@@ -215,6 +246,61 @@ export function Profile() {
         {importMsg && (
           <p className="text-zinc-400 text-xs mt-1">{importMsg}</p>
         )}
+      </section>
+
+      {/* Copy-paste handoff */}
+      <section className="flex flex-col gap-2">
+        <h2 className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">AI Handoff (No Gemini Key)</h2>
+        <p className="text-zinc-500 text-xs">Build a prompt to paste into ChatGPT/Claude, then paste the response back.</p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Describe your tone…"
+            value={handoffPrompt}
+            onChange={(e) => setHandoffPrompt(e.target.value)}
+            className="flex-1 bg-zinc-800 text-white rounded-xl px-3 py-2 text-sm outline-none placeholder:text-zinc-600"
+          />
+          <input
+            type="text"
+            placeholder="Instrument (optional)"
+            value={handoffInstrument}
+            onChange={(e) => setHandoffInstrument(e.target.value)}
+            className="w-32 bg-zinc-800 text-white rounded-xl px-3 py-2 text-sm outline-none placeholder:text-zinc-600"
+          />
+          <button
+            type="button"
+            onClick={handleBuildHandoffPrompt}
+            className="bg-zinc-700 text-white rounded-xl px-3 py-2 text-xs font-medium"
+          >
+            Build Prompt
+          </button>
+        </div>
+        {handoffGeneratedPrompt && (
+          <textarea
+            readOnly
+            value={handoffGeneratedPrompt}
+            rows={5}
+            className="bg-zinc-800 text-zinc-300 rounded-xl px-3 py-2 text-xs resize-none outline-none font-mono"
+            onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+          />
+        )}
+        <label className="text-zinc-400 text-xs">Paste AI response here:</label>
+        <textarea
+          value={handoffPasted}
+          onChange={(e) => setHandoffPasted(e.target.value)}
+          placeholder='{"archetype": "crunch", "descriptors": ["warm"], "deltas": {"amp.gain": 10}}'
+          rows={4}
+          className="bg-zinc-800 text-zinc-300 rounded-xl px-3 py-2 text-xs resize-none outline-none font-mono placeholder:text-zinc-600"
+        />
+        <button
+          type="button"
+          onClick={() => void handleHandoffPaste()}
+          disabled={!handoffPasted.trim()}
+          className="bg-blue-600 text-white rounded-xl px-4 py-2 text-sm font-medium w-fit disabled:opacity-50"
+        >
+          Parse &amp; Save Tone
+        </button>
+        {handoffMsg && <p className="text-zinc-400 text-xs">{handoffMsg}</p>}
       </section>
 
       {/* Danger zone */}
