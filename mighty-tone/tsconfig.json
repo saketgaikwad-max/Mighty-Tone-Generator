@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
@@ -15,11 +15,12 @@
     "skipLibCheck": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "erasableSyntaxOnly": true,
+    "erasableSyntaxOnly": false,
+    "jsx": "react-jsx",
     "types": ["node"],
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "tests", "tools", "vitest.config.ts"]
+  "include": ["src", "tests", "tools", "vitest.config.ts", "vite.config.ts", "eslint.config.js"]
 }
