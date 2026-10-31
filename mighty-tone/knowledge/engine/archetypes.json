@@ -233,7 +233,7 @@
         "rvb.decay": 35,
         "gate.sensitivity": 20,
         "gate.decay": 50,
-        "cab.lowcut": 29,
+        "cab.lowcut": 20,
         "cab.hicut": 95
       },
       "match": [{ "instrumentKind": ["mandolin"], "score": 2 }],
@@ -262,7 +262,7 @@
         "eq.eq_b8": 55,
         "rvb.level": 15,
         "rvb.decay": 25,
-        "cab.lowcut": 32,
+        "cab.lowcut": 22,
         "cab.hicut": 90
       },
       "match": [{ "descriptors": ["acoustic"], "instrumentKind": ["mandolin"], "score": 5 }],
