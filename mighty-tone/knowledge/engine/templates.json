@@ -1,0 +1,18 @@
+{
+  "$comment": "Real MightyAmp exports (copied verbatim from tests/fixtures/qr/*.txt; a test keeps them in sync). engine/solve decodes one as the template so unmodelled bytes and chain order stay device-valid.",
+  "schemaVersion": 1,
+  "templates": {
+    "clean-tone": {
+      "qr": "nux://MightyAmp:DwEAAwIbAUEJAgIfAAAAAAAKABQ8AA9QGx4AAAAeUFYRIwgAAAAsIyA5NTwAAAAAAAAAMjIAAAALGQBSAAAABSRGAAAAAAAARgYoFAAAAAAyCmQAAAAAAAAAAAUBBAIDCQYHCAAAAAAAAAAAAAAAAAAAAA==",
+      "fixture": "tests/fixtures/qr/clean-tone.txt"
+    },
+    "gain-responsive-distortion": {
+      "qr": "nux://MightyAmp:DwEAAggNA0EIQgIKAAAAAAAWRkEAADITMgAAAABLPDJDQD0AAAA4P0VGMzQyMjIyMgAAIxQAAAAbSQAAAAAAGgJGAAAAAAAAUDJQJgAAAAA3AGQAAAAAAAAAAAUBAgMJBAYHCAAAAAAAAAAAAAAAAAAAAA==",
+      "fixture": "tests/fixtures/qr/gain-responsive-distortion.txt"
+    },
+    "acoustic-ir-tone": {
+      "qr": "nux://MightyAmp:DwEAQgxQA0FCAQMlAAAAAAAeMg8AAAAyAAAAAAA/IzZGOFoAAABKOUQqKkU2JSc4PQAADygAAAAKMgAAAAAARg8KAAAAAAAAFAgAAAAAAABLBEsAAAAAAAAAAAUECQEGAgMHCAAAAAAAAAAAAAAAAAAAAA==",
+      "fixture": "tests/fixtures/qr/acoustic-ir-tone.txt"
+    }
+  }
+}

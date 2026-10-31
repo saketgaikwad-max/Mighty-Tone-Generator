@@ -1,0 +1,138 @@
+{
+  "$comment": "Expert rules, applied by engine/solve in file order after priors, vocabulary and instrument corrections; each firing rule id is appended to the rule trace. condition atoms: {param, gt|gte|lt|lte}, {archetype: [...]}, {instrument: [...]}, {instrumentKind: [...]}, {pickup: [...]}, {descriptor: [...]}, {enabled: block}, {disabled: block}, {modelPrefix: {block: prefix}}; combinators {all: [...]}, {any: [...]}, {not: cond}. A param atom is false when the block's model lacks the param. action is a list of {set|add|min|max: {param: value}}, {enable|disable: [block]}, {warn: text}. min/max are floors/caps. Params use canonical '<block>.<param>' keys (vocabulary.paramAliases).",
+  "schemaVersion": 1,
+  "rules": [
+    {
+      "id": "R-JAZZ-NO-DIST",
+      "condition": { "archetype": ["jazz"] },
+      "action": [{ "disable": ["efx"] }],
+      "rationale": "Jazz clean tones rely on the amp's clean headroom; a drive pedal adds grit that masks chord voicings."
+    },
+    {
+      "id": "R-CLEAN-GAIN-CAP",
+      "condition": {
+        "all": [{ "archetype": ["clean", "jazz", "mandolin-electric"] }, { "param": "amp.gain", "gt": 40 }]
+      },
+      "action": [{ "max": { "amp.gain": 40 } }],
+      "rationale": "Above ~40% most clean models start to break up; clean archetypes keep headroom."
+    },
+    {
+      "id": "R-GATE-HG",
+      "condition": { "param": "amp.gain", "gte": 75 },
+      "action": [{ "enable": ["gate"] }, { "min": { "gate.sensitivity": 45 } }],
+      "rationale": "Noise rises with gain; at high gain a gate is needed to keep pauses silent."
+    },
+    {
+      "id": "R-GATE-HG-SC",
+      "condition": { "all": [{ "archetype": ["high-gain"] }, { "pickup": ["single-coil"] }] },
+      "action": [{ "enable": ["gate"] }, { "set": { "gate.sensitivity": 60 } }],
+      "rationale": "Single coils hum; under high gain the hum is amplified, so the gate threshold goes higher than for humbuckers.",
+      "notes": "Mighty Space's gate has Sensitivity (no Threshold); higher sensitivity is the threshold-up equivalent."
+    },
+    {
+      "id": "R-GATE-SC-DRIVE",
+      "condition": {
+        "all": [{ "pickup": ["single-coil", "p90"] }, { "param": "amp.gain", "gt": 50 }, { "disabled": "gate" }]
+      },
+      "action": [{ "enable": ["gate"] }, { "min": { "gate.sensitivity": 35 } }],
+      "rationale": "Single-coil and P-90 hum becomes audible from crunch gain upward."
+    },
+    {
+      "id": "R-GATE-QUIET-PICKUP",
+      "condition": { "all": [{ "instrumentKind": ["mandolin"] }, { "enabled": "gate" }, { "param": "gate.sensitivity", "gt": 25 }] },
+      "action": [{ "max": { "gate.sensitivity": 25 } }],
+      "rationale": "The mandolin's stacked humbucker is quiet and its notes decay fast; a strong gate chops the tail."
+    },
+    {
+      "id": "R-MUD",
+      "condition": { "all": [{ "param": "amp.bass", "gt": 70 }, { "param": "amp.gain", "gt": 60 }] },
+      "action": [{ "set": { "amp.bass": 60 } }],
+      "rationale": "Pre-distortion bass is compressed into mud at high gain; keep amp bass at or below 60 and get weight from the cab."
+    },
+    {
+      "id": "R-HG-LOWCUT",
+      "condition": { "param": "amp.gain", "gte": 80 },
+      "action": [{ "min": { "cab.lowcut": 25 } }],
+      "rationale": "A ~90 Hz low cut tightens palm mutes and leaves room for the bass guitar."
+    },
+    {
+      "id": "R-SCOOP-FLOOR",
+      "condition": { "all": [{ "param": "amp.gain", "gte": 70 }, { "param": "amp.mid", "lt": 20 }] },
+      "action": [{ "min": { "amp.mid": 20 } }],
+      "rationale": "Fully scooped high-gain tones disappear in a band mix; keep some mids for cut."
+    },
+    {
+      "id": "R-FIZZ",
+      "condition": { "all": [{ "param": "amp.gain", "gte": 70 }, { "param": "amp.treble", "gt": 75 }] },
+      "action": [{ "max": { "cab.hicut": 70 } }],
+      "rationale": "High gain plus high treble produces fizz; a ~13 kHz high cut removes it without dulling the attack."
+    },
+    {
+      "id": "R-DLY-RVB-CLARITY",
+      "condition": {
+        "all": [{ "enabled": "dly" }, { "enabled": "rvb" }, { "not": { "descriptor": ["ambient"] } }]
+      },
+      "action": [{ "add": { "rvb.level": -15 } }],
+      "rationale": "Delay and reverb together smear note definition; pull the reverb back so the repeats stay clear.",
+      "exceptions": ["ambient/shoegaze requests want the wash"]
+    },
+    {
+      "id": "R-HG-RVB-CAP",
+      "condition": { "all": [{ "param": "amp.gain", "gte": 70 }, { "not": { "descriptor": ["ambient"] } }] },
+      "action": [{ "max": { "rvb.level": 25 } }],
+      "rationale": "Reverb tails on saturated tones turn into noise; keep the mix low."
+    },
+    {
+      "id": "R-LEAD-DLY-MIX",
+      "condition": { "all": [{ "archetype": ["lead"] }, { "param": "dly.level", "gt": 40 }] },
+      "action": [{ "max": { "dly.level": 35 } }],
+      "rationale": "Lead delay should sit behind the dry note, not compete with it."
+    },
+    {
+      "id": "R-ACOUSTIC-AMP-WARN",
+      "condition": { "all": [{ "instrumentKind": ["acoustic"] }, { "enabled": "amp" }] },
+      "action": [
+        {
+          "warn": "Acoustic pickup into an electric amp model: expect quack and feedback. Try an acoustic prompt for amp-off + IR."
+        }
+      ],
+      "rationale": "Electric amp models are voiced for magnetic pickups; piezo/acoustic signals sound harsh through them."
+    },
+    {
+      "id": "R-ELECTRIC-ACOUSTIC-SIM",
+      "condition": { "all": [{ "instrumentKind": ["electric"] }, { "archetype": ["acoustic", "mandolin-acoustic"] }] },
+      "action": [{ "warn": "Acoustic sim with an electric guitar works best on the neck pickup with the tone rolled back." }],
+      "rationale": "Acoustic body IRs exaggerate the bridge pickup's bite."
+    },
+    {
+      "id": "R-USER-IR-NOTE",
+      "condition": { "all": [{ "enabled": "cab" }, { "modelPrefix": { "cab": "cab.user-ir-" } }] },
+      "action": [{ "warn": "This patch uses a User IR slot; load an acoustic IR there with Mighty Editor or it will sound wrong." }],
+      "rationale": "User IR slots are empty or user-specific; the QR stores only the slot number."
+    },
+    {
+      "id": "R-MANDOLIN-LOWCUT",
+      "condition": { "instrumentKind": ["mandolin"] },
+      "action": [{ "min": { "cab.lowcut": 29 } }],
+      "rationale": "Mandolin has no fundamental below ~196 Hz; a ~100 Hz low cut removes body boom and handling noise."
+    },
+    {
+      "id": "R-MANDOLIN-BASS",
+      "condition": { "all": [{ "instrumentKind": ["mandolin"] }, { "param": "amp.bass", "gt": 55 }] },
+      "action": [{ "max": { "amp.bass": 50 } }],
+      "rationale": "Boosting amp bass on mandolin adds boom and feedback, not warmth; warmth comes from lower treble."
+    },
+    {
+      "id": "R-MANDOLIN-HB-EQ",
+      "condition": { "all": [{ "instrument": ["mandolin-magnetic"] }, { "param": "amp.treble", "lt": 45 }] },
+      "action": [{ "min": { "amp.treble": 50 } }],
+      "rationale": "Guitar humbucker advice (cut treble to tame bite) is the wrong direction for the mandolin's dark stacked humbucker; it needs treble to keep chop and tremolo picking clear."
+    },
+    {
+      "id": "R-PIEZO-LOWCUT",
+      "condition": { "pickup": ["piezo"] },
+      "action": [{ "min": { "cab.lowcut": 25 } }],
+      "rationale": "Piezo pickups are boomy and feedback-prone below ~90 Hz."
+    }
+  ]
+}

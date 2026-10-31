@@ -1,0 +1,222 @@
+{
+  "$comment": "Descriptor vocabulary for engine/parse. Keys of `deltas`/`targets` are canonical '<block>.<param>' names resolved per model through `paramAliases` (unresolvable keys are skipped). Deltas are raw 0-100 steps; `targets` are hard [min,max] bands applied after deltas; `archetypes` are scores added to archetype selection; `blocks` turns blocks on/off; `models` picks a block model. A negated term inverts deltas and blocks, subtracts its archetype scores and drops targets/models.",
+  "schemaVersion": 1,
+  "modifiers": {
+    "negators": ["not", "no", "less", "without", "non", "never", "dont", "don't", "avoid", "minus"],
+    "negationWindow": 3,
+    "intensifiers": {
+      "very": 1.5,
+      "super": 1.5,
+      "extra": 1.5,
+      "really": 1.3,
+      "more": 1.2,
+      "quite": 1.2,
+      "slightly": 0.5,
+      "bit": 0.5,
+      "little": 0.5,
+      "somewhat": 0.6,
+      "touch": 0.5,
+      "too": 1
+    }
+  },
+  "stopwords": [
+    "a", "an", "the", "and", "or", "with", "for", "of", "to", "in", "on", "at", "by", "from", "some", "kind", "sort",
+    "tone", "tones", "sound", "sounds", "sounding", "guitar", "amp", "patch", "preset", "setting", "settings", "my",
+    "me", "i", "want", "need", "like", "please", "but", "that", "this", "is", "it", "its", "be", "make", "give",
+    "something", "style", "type", "using", "use", "play", "playing", "into", "through", "just", "pretty", "so"
+  ],
+  "paramAliases": {
+    "amp.treble": ["treble", "tone"],
+    "amp.mid": ["mid"],
+    "amp.presence": ["presence"],
+    "rvb.level": ["level", "mix"],
+    "rvb.decay": ["decay", "depth"],
+    "dly.level": ["level", "intensity"],
+    "dly.feedback": ["feedback", "repeat", "echo"],
+    "dly.time": ["time", "rate"],
+    "efx.drive": ["drive", "gain", "distortion", "sustain", "sensitivity"],
+    "efx.level": ["level", "volume", "output"],
+    "comp.sustain": ["sustain", "threshold"],
+    "comp.level": ["level", "gain"],
+    "mod.rate": ["rate", "speed"],
+    "mod.depth": ["depth", "intensity", "width"]
+  },
+  "terms": {
+    "warm": {
+      "synonyms": ["mellow", "smooth", "round", "rounded", "creamy", "velvety", "soft"],
+      "deltas": { "amp.bass": 10, "amp.treble": -8, "amp.presence": -5, "amp.gain": -5 },
+      "archetypes": { "jazz": 1, "clean": 0.5 }
+    },
+    "bright": {
+      "synonyms": ["sparkly", "sparkling", "chimey", "chime", "chimy", "airy", "crisp", "shimmery"],
+      "deltas": { "amp.treble": 12, "amp.presence": 8 },
+      "archetypes": { "clean": 0.5 }
+    },
+    "dark": {
+      "synonyms": ["darker", "dull", "muted", "wooly", "woolly"],
+      "deltas": { "amp.treble": -12, "amp.presence": -8, "cab.hicut": -15 },
+      "archetypes": { "jazz": 0.5 }
+    },
+    "scooped": {
+      "synonyms": ["scoop", "v-shaped", "mid-scooped", "scooped-mids"],
+      "deltas": { "amp.mid": -20, "amp.bass": 8, "amp.treble": 8 },
+      "archetypes": { "high-gain": 1 }
+    },
+    "tight": {
+      "synonyms": ["tighter", "focused", "articulate"],
+      "deltas": { "amp.bass": -8, "gate.sensitivity": 10, "cab.lowcut": 8 },
+      "archetypes": { "high-gain": 0.5 }
+    },
+    "clean": {
+      "synonyms": ["pristine", "cleanish", "cleaner"],
+      "targets": { "amp.gain": [20, 35] },
+      "archetypes": { "clean": 3, "jazz": 1 }
+    },
+    "crunch": {
+      "synonyms": ["crunchy", "breakup", "edge-of-breakup", "gritty", "grit", "overdriven", "driven", "dirty"],
+      "targets": { "amp.gain": [50, 65] },
+      "archetypes": { "crunch": 3 }
+    },
+    "lead": {
+      "synonyms": ["solo", "soloing", "solos", "singing"],
+      "deltas": { "amp.mid": 10 },
+      "targets": { "amp.gain": [65, 80] },
+      "blocks": { "dly": true },
+      "archetypes": { "lead": 3 }
+    },
+    "high-gain": {
+      "synonyms": ["high gain", "hi-gain", "hi gain", "heavy", "brutal", "chug", "chugging", "djent", "saturated"],
+      "targets": { "amp.gain": [80, 95] },
+      "archetypes": { "high-gain": 3 }
+    },
+    "metal": {
+      "synonyms": ["metalcore", "thrash", "doom", "nu-metal", "deathcore"],
+      "targets": { "amp.gain": [80, 95] },
+      "archetypes": { "high-gain": 3 }
+    },
+    "acoustic": {
+      "synonyms": ["unplugged", "acoustic-sim", "acoustic sim", "campfire"],
+      "archetypes": { "acoustic": 3 }
+    },
+    "jazz": {
+      "synonyms": ["jazzy", "bebop", "archtop", "swing"],
+      "deltas": { "amp.treble": -6 },
+      "archetypes": { "jazz": 3 }
+    },
+    "blues": {
+      "synonyms": ["bluesy", "blue"],
+      "deltas": { "amp.mid": 6 },
+      "archetypes": { "crunch": 2, "lead": 0.5 }
+    },
+    "rock": {
+      "synonyms": ["classic rock", "hard rock", "rocky", "punk", "grunge"],
+      "archetypes": { "crunch": 2 }
+    },
+    "country": {
+      "synonyms": ["chicken pickin", "chicken picking", "bluegrass", "americana"],
+      "deltas": { "amp.treble": 6, "amp.mid": -4 },
+      "blocks": { "comp": true },
+      "archetypes": { "clean": 2 }
+    },
+    "funk": {
+      "synonyms": ["funky", "neo-soul", "rnb"],
+      "deltas": { "amp.treble": 6, "amp.mid": -4 },
+      "blocks": { "comp": true },
+      "archetypes": { "clean": 2 }
+    },
+    "glassy": {
+      "synonyms": ["glass", "spanky", "twangy", "twang", "snappy"],
+      "deltas": { "amp.treble": 8, "amp.presence": 6, "amp.mid": -6 },
+      "archetypes": { "clean": 1 }
+    },
+    "punchy": {
+      "synonyms": ["punch", "percussive"],
+      "deltas": { "amp.mid": 8, "amp.bass": 4 }
+    },
+    "fat": {
+      "synonyms": ["thick", "beefy", "full", "fuller", "chunky", "huge", "big"],
+      "deltas": { "amp.bass": 8, "amp.mid": 6 }
+    },
+    "thin": {
+      "synonyms": ["lean", "skinny", "nasal", "tinny"],
+      "deltas": { "amp.bass": -10, "amp.mid": -6 }
+    },
+    "harsh": {
+      "synonyms": ["fizzy", "shrill", "piercing", "ice-pick", "icepick", "brittle", "spiky"],
+      "deltas": { "amp.treble": 10, "amp.presence": 10, "cab.hicut": 10 }
+    },
+    "muddy": {
+      "synonyms": ["boomy", "flubby", "murky", "bloated"],
+      "deltas": { "amp.bass": 12, "cab.lowcut": -10 }
+    },
+    "vintage": {
+      "synonyms": ["retro", "old-school", "oldschool", "60s", "70s", "classic"],
+      "deltas": { "amp.presence": -5, "amp.treble": -4, "amp.gain": -5 }
+    },
+    "modern": {
+      "synonyms": ["contemporary", "hi-fi", "hifi"],
+      "deltas": { "amp.presence": 6, "amp.bass": 4, "amp.mid": -4 }
+    },
+    "ambient": {
+      "synonyms": ["spacey", "spacy", "atmospheric", "ethereal", "dreamy", "shoegaze", "washy", "lush"],
+      "deltas": { "rvb.level": 20, "rvb.decay": 20, "dly.level": 10, "dly.feedback": 10 },
+      "blocks": { "dly": true, "rvb": true }
+    },
+    "reverb": {
+      "synonyms": ["reverby", "verb", "wet", "roomy"],
+      "deltas": { "rvb.level": 10 },
+      "blocks": { "rvb": true }
+    },
+    "delay": {
+      "synonyms": ["echo", "echoes", "delays", "repeats"],
+      "blocks": { "dly": true }
+    },
+    "slapback": {
+      "synonyms": ["slap", "rockabilly"],
+      "deltas": { "dly.level": 5, "dly.feedback": -20, "dly.time": -30 },
+      "blocks": { "dly": true },
+      "models": { "dly": "dly.tape-echo" }
+    },
+    "chorus": {
+      "synonyms": ["chorused", "chorusy", "80s"],
+      "blocks": { "mod": true },
+      "models": { "mod": "mod.ce-2" }
+    },
+    "phaser": {
+      "synonyms": ["phased", "phase", "phasey"],
+      "blocks": { "mod": true },
+      "models": { "mod": "mod.phase-90" }
+    },
+    "tremolo": {
+      "synonyms": ["trem", "surf"],
+      "blocks": { "mod": true },
+      "models": { "mod": "mod.tremolo" }
+    },
+    "dry": {
+      "synonyms": ["bone-dry", "no effects", "unprocessed"],
+      "blocks": { "rvb": false, "dly": false, "mod": false }
+    },
+    "compressed": {
+      "synonyms": ["compression", "squashed", "squishy", "sustain", "sustaining", "even"],
+      "deltas": { "comp.sustain": 15 },
+      "blocks": { "comp": true }
+    },
+    "boost": {
+      "synonyms": ["boosted", "pushed", "hot", "hotter"],
+      "deltas": { "amp.gain": 8, "efx.level": 10 },
+      "blocks": { "efx": true },
+      "models": { "efx": "efx.t-screamer" }
+    },
+    "fuzz": {
+      "synonyms": ["fuzzy", "fuzzed", "muff", "stoner"],
+      "blocks": { "efx": true },
+      "models": { "efx": "efx.muff-fuzz" },
+      "archetypes": { "crunch": 1 }
+    },
+    "quiet": {
+      "synonyms": ["noiseless", "noise-free", "silent", "hiss-free", "gated"],
+      "deltas": { "gate.sensitivity": 15 },
+      "blocks": { "gate": true }
+    }
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "$comment": "Instrument/pickup profiles. `aliases` are matched in the prompt by engine/parse (longest phrase wins). `archetypeBias` is added to archetype scores. `corrections` is a list of groups applied by engine/solve; a group with `archetypes` only applies to those archetypes. In each group `models` overrides archetype model choice (vocabulary models still win), `enable` turns blocks on after vocabulary toggles, and `deltas` are additive raw 0-100 steps on canonical <block>.<param> keys (params the chosen model lacks are skipped). 10-band EQ raw steps are 0.3 dB (raw 50 = 0 dB); cab lowcut raw r = 20 + 2.8r Hz.",
+  "schemaVersion": 1,
+  "instruments": {
+    "electric-single-coil": {
+      "label": "Electric guitar, single-coil pickups",
+      "kind": "electric",
+      "pickup": "single-coil",
+      "aliases": [
+        "single coil",
+        "single-coil",
+        "single coils",
+        "singlecoil",
+        "strat",
+        "stratocaster",
+        "tele",
+        "telecaster"
+      ],
+      "corrections": [
+        {
+          "deltas": {
+            "amp.bass": 3,
+            "amp.treble": -3,
+            "gate.sensitivity": 10
+          }
+        }
+      ],
+      "notes": [
+        "Lower output and 60-cycle hum: raise the gate sensitivity, more so as gain rises.",
+        "Brighter than humbuckers: shave a little treble to avoid ice-pick at higher gain."
+      ]
+    },
+    "electric-humbucker": {
+      "label": "Electric guitar, humbuckers",
+      "kind": "electric",
+      "pickup": "humbucker",
+      "aliases": [
+        "humbucker",
+        "humbuckers",
+        "hb",
+        "les paul",
+        "lp",
+        "sg"
+      ],
+      "corrections": [
+        {
+          "deltas": {
+            "amp.bass": -4,
+            "amp.treble": 4,
+            "amp.gain": -3
+          }
+        }
+      ],
+      "notes": [
+        "Hotter, darker output: slightly less gain and bass, a little more treble than a single-coil prior."
+      ]
+    },
+    "electric-p90": {
+      "label": "Electric guitar, P-90 pickups",
+      "kind": "electric",
+      "pickup": "p90",
+      "aliases": [
+        "p90",
+        "p-90",
+        "p90s",
+        "p-90s",
+        "soapbar"
+      ],
+      "corrections": [
+        {
+          "deltas": {
+            "amp.bass": -2,
+            "amp.treble": -2,
+            "gate.sensitivity": 5
+          }
+        }
+      ],
+      "notes": [
+        "Single-coil hum with humbucker-like output; mild gate, slightly smoother top."
+      ]
+    },
+    "acoustic-piezo": {
+      "label": "Acoustic guitar, under-saddle piezo",
+      "kind": "acoustic",
+      "pickup": "piezo",
+      "aliases": [
+        "piezo",
+        "under-saddle",
+        "undersaddle",
+        "under saddle",
+        "ej-200ce",
+        "ej200"
+      ],
+      "archetypeBias": {
+        "acoustic": 2
+      },
+      "corrections": [
+        {
+          "models": {
+            "eq": "eq.10-band"
+          },
+          "enable": [
+            "eq"
+          ],
+          "deltas": {
+            "eq.eq_b4": 5,
+            "eq.eq_b6": -8,
+            "eq.eq_b7": -10,
+            "eq.eq_b9": -5,
+            "cab.hicut": -10
+          }
+        }
+      ],
+      "notes": [
+        "Piezo quack lives around 1-2 kHz: cut 1K (-2.4 dB) and 2K (-3 dB).",
+        "Passive piezo into a 1 MOhm input sounds thin: add a little 250 Hz body and tame the 8 kHz zing."
+      ]
+    },
+    "acoustic-magnetic": {
+      "label": "Acoustic guitar, soundhole magnetic pickup",
+      "kind": "acoustic",
+      "pickup": "magnetic",
+      "aliases": [
+        "soundhole",
+        "sound hole",
+        "magnetic acoustic",
+        "acoustic magnetic"
+      ],
+      "archetypeBias": {
+        "acoustic": 2
+      },
+      "corrections": [
+        {
+          "enable": [
+            "eq"
+          ],
+          "models": {
+            "eq": "eq.10-band"
+          },
+          "deltas": {
+            "eq.eq_b3": -6,
+            "eq.eq_b8": 5,
+            "eq.eq_b9": 4
+          }
+        },
+        {
+          "archetypes": [
+            "acoustic"
+          ],
+          "models": {
+            "cab": "cab.g-hbird"
+          }
+        }
+      ],
+      "notes": [
+        "Magnetic soundhole pickups pair best with an acoustic body sim (G-HBIRD).",
+        "They are boomy at 125 Hz and lack air: cut 125, lift 4K/8K."
+      ]
+    },
+    "mandolin-magnetic": {
+      "label": "Electric mandolin, stacked humbucker",
+      "kind": "mandolin",
+      "pickup": "stacked-humbucker",
+      "aliases": [
+        "mandolin",
+        "mando",
+        "electric mandolin",
+        "mandolins"
+      ],
+      "archetypeBias": {
+        "mandolin-electric": 2.5
+      },
+      "corrections": [
+        {
+          "deltas": {
+            "cab.lowcut": 10,
+            "amp.bass": -6,
+            "gate.sensitivity": -10
+          }
+        }
+      ],
+      "notes": [
+        "Stacked humbucker is quiet: keep the gate light so the short mandolin decay is not chopped.",
+        "Mandolin has no useful content below ~100 Hz; raise low cut instead of boosting bass."
+      ]
+    },
+    "mandolin-acoustic": {
+      "label": "Acoustic mandolin (mic or transducer)",
+      "kind": "mandolin",
+      "pickup": "piezo",
+      "aliases": [
+        "acoustic mandolin",
+        "mandolin acoustic",
+        "acoustic mando"
+      ],
+      "archetypeBias": {
+        "mandolin-acoustic": 4
+      },
+      "corrections": [
+        {
+          "models": {
+            "eq": "eq.10-band"
+          },
+          "enable": [
+            "eq"
+          ],
+          "deltas": {
+            "eq.eq_b3": -8,
+            "eq.eq_b7": -5,
+            "cab.lowcut": 10
+          }
+        }
+      ],
+      "notes": [
+        "Cut 125 Hz boom and some 2 kHz quack; high low-cut keeps it out of the bass register."
+      ]
+    }
+  }
+}

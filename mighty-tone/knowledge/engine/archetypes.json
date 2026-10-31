@@ -1,0 +1,272 @@
+{
+  "$comment": "Tone archetypes for engine/solve. `models[block]` lists candidates (first is used; the rest are alternatives for later scoring); blocks not listed keep the template's model. Every block starts from the chosen model's defaults, then `paramPriors` (canonical '<block>.<param>' keys, see vocabulary.paramAliases) are applied. `chain` sets which blocks are on. `template` names a real-fixture preset in templates.json whose chain order and unmodelled bytes are kept. `match` adds score when descriptors and/or instrument kind co-occur. Device name mapping: JCM800 -> amp.brit-800, RECTIFIER -> amp.dual-rect, TWIN -> amp.twin-reverb, VOXY (AC30) -> amp.class-a30; there is no 5150 model, so high-gain falls back to amp.uber-higain / amp.die-vh4.",
+  "schemaVersion": 1,
+  "default": "clean",
+  "confidence": {
+    "base": 0.35,
+    "perDescriptor": 0.1,
+    "descriptorCap": 0.3,
+    "archetypeMatched": 0.2,
+    "instrumentKnown": 0.1,
+    "perUnknownTerm": 0.05,
+    "perWarning": 0.05
+  },
+  "archetypes": {
+    "clean": {
+      "name": "Clean",
+      "template": "clean-tone",
+      "models": {
+        "amp": ["amp.mld", "amp.1987x50", "amp.twin-reverb"],
+        "cab": ["cab.mkb410", "cab.m1960tv", "cab.tr212"],
+        "comp": ["comp.studio-comp"],
+        "rvb": ["rvb.hall"],
+        "dly": ["dly.digital-delay"],
+        "mod": ["mod.ce-2"],
+        "eq": ["eq.6-band"],
+        "efx": ["efx.rc-boost"],
+        "gate": ["gate.noise-gate"]
+      },
+      "chain": { "gate": false, "comp": true, "efx": false, "amp": true, "eq": false, "mod": false, "dly": false, "rvb": true, "cab": true },
+      "paramPriors": {
+        "amp.gain": 28,
+        "amp.master": 70,
+        "amp.bass": 55,
+        "amp.mid": 50,
+        "amp.treble": 58,
+        "amp.presence": 55,
+        "comp.threshold": 35,
+        "comp.ratio": 30,
+        "rvb.level": 25,
+        "rvb.decay": 45,
+        "dly.level": 20,
+        "dly.feedback": 25,
+        "gate.sensitivity": 30,
+        "cab.lowcut": 10,
+        "cab.hicut": 100
+      },
+      "master": 50
+    },
+    "crunch": {
+      "name": "Crunch",
+      "template": "gain-responsive-distortion",
+      "models": {
+        "amp": ["amp.1987x50", "amp.brit-800", "amp.plexi-100"],
+        "cab": ["cab.m1960tv", "cab.m1960ax"],
+        "rvb": ["rvb.room"],
+        "dly": ["dly.analog"],
+        "mod": ["mod.phase-100"],
+        "eq": ["eq.6-band"],
+        "efx": ["efx.t-screamer"],
+        "comp": ["comp.k-comp"],
+        "gate": ["gate.noise-gate"]
+      },
+      "chain": { "gate": false, "comp": false, "efx": false, "amp": true, "eq": false, "mod": false, "dly": false, "rvb": true, "cab": true },
+      "paramPriors": {
+        "amp.gain": 58,
+        "amp.master": 70,
+        "amp.bass": 50,
+        "amp.mid": 65,
+        "amp.treble": 60,
+        "amp.presence": 58,
+        "rvb.level": 18,
+        "rvb.decay": 40,
+        "dly.level": 20,
+        "gate.sensitivity": 30,
+        "cab.lowcut": 15,
+        "cab.hicut": 100
+      },
+      "master": 50
+    },
+    "lead": {
+      "name": "Lead",
+      "template": "gain-responsive-distortion",
+      "models": {
+        "amp": ["amp.brit-800", "amp.fireman-hbe", "amp.die-vh4"],
+        "cab": ["cab.m1960av", "cab.m1960ax"],
+        "efx": ["efx.t-screamer"],
+        "dly": ["dly.digital-delay"],
+        "rvb": ["rvb.hall"],
+        "mod": ["mod.ce-2"],
+        "eq": ["eq.6-band"],
+        "comp": ["comp.k-comp"],
+        "gate": ["gate.noise-gate"]
+      },
+      "chain": { "gate": true, "comp": false, "efx": true, "amp": true, "eq": false, "mod": false, "dly": true, "rvb": true, "cab": true },
+      "paramPriors": {
+        "amp.gain": 72,
+        "amp.master": 70,
+        "amp.bass": 50,
+        "amp.mid": 70,
+        "amp.treble": 60,
+        "amp.presence": 60,
+        "efx.drive": 20,
+        "efx.level": 70,
+        "efx.tone": 55,
+        "dly.level": 30,
+        "dly.feedback": 30,
+        "dly.time": 48,
+        "rvb.level": 22,
+        "rvb.decay": 50,
+        "gate.sensitivity": 35,
+        "gate.decay": 40,
+        "cab.lowcut": 20,
+        "cab.hicut": 90
+      },
+      "master": 50
+    },
+    "high-gain": {
+      "name": "High Gain",
+      "template": "gain-responsive-distortion",
+      "models": {
+        "amp": ["amp.dual-rect", "amp.uber-higain", "amp.die-vh4"],
+        "cab": ["cab.rect-412", "cab.uber412"],
+        "efx": ["efx.t-screamer"],
+        "rvb": ["rvb.room"],
+        "dly": ["dly.digital-delay"],
+        "mod": ["mod.phase-100"],
+        "eq": ["eq.6-band"],
+        "comp": ["comp.k-comp"],
+        "gate": ["gate.noise-gate"]
+      },
+      "chain": { "gate": true, "comp": false, "efx": true, "amp": true, "eq": false, "mod": false, "dly": false, "rvb": true, "cab": true },
+      "paramPriors": {
+        "amp.gain": 85,
+        "amp.master": 65,
+        "amp.bass": 58,
+        "amp.mid": 45,
+        "amp.treble": 62,
+        "amp.presence": 62,
+        "efx.drive": 10,
+        "efx.level": 75,
+        "efx.tone": 60,
+        "rvb.level": 12,
+        "rvb.decay": 30,
+        "gate.sensitivity": 50,
+        "gate.decay": 30,
+        "cab.lowcut": 25,
+        "cab.hicut": 80
+      },
+      "master": 50
+    },
+    "acoustic": {
+      "name": "Acoustic",
+      "template": "acoustic-ir-tone",
+      "models": {
+        "amp": ["amp.optima-air", "amp.stageman"],
+        "cab": ["cab.user-ir-3", "cab.g-hbird", "cab.m-d45"],
+        "comp": ["comp.k-comp"],
+        "eq": ["eq.10-band"],
+        "rvb": ["rvb.plate"],
+        "dly": ["dly.analog"],
+        "mod": ["mod.ce-2"],
+        "efx": ["efx.ac-boost"],
+        "gate": ["gate.noise-gate"]
+      },
+      "chain": { "gate": false, "comp": true, "efx": false, "amp": false, "eq": true, "mod": false, "dly": false, "rvb": true, "cab": true },
+      "paramPriors": {
+        "comp.level": 50,
+        "comp.sustain": 25,
+        "comp.clipping": 15,
+        "rvb.level": 15,
+        "rvb.decay": 30,
+        "gate.sensitivity": 15,
+        "cab.lowcut": 25,
+        "cab.hicut": 85
+      },
+      "master": 50
+    },
+    "jazz": {
+      "name": "Jazz",
+      "template": "clean-tone",
+      "models": {
+        "amp": ["amp.twin-reverb", "amp.mld", "amp.jazz-clean"],
+        "cab": ["cab.tr212", "cab.mkb410"],
+        "rvb": ["rvb.room"],
+        "dly": ["dly.analog"],
+        "comp": ["comp.studio-comp"],
+        "mod": ["mod.ce-2"],
+        "eq": ["eq.6-band"],
+        "efx": ["efx.rc-boost"],
+        "gate": ["gate.noise-gate"]
+      },
+      "chain": { "gate": false, "comp": false, "efx": false, "amp": true, "eq": false, "mod": false, "dly": false, "rvb": true, "cab": true },
+      "paramPriors": {
+        "amp.gain": 20,
+        "amp.master": 65,
+        "amp.bass": 60,
+        "amp.mid": 55,
+        "amp.treble": 40,
+        "amp.bright": 0,
+        "rvb.level": 18,
+        "rvb.decay": 40,
+        "gate.sensitivity": 20,
+        "cab.lowcut": 8,
+        "cab.hicut": 60
+      },
+      "master": 50
+    },
+    "mandolin-electric": {
+      "name": "Mando Elec",
+      "template": "clean-tone",
+      "models": {
+        "amp": ["amp.twin-reverb", "amp.class-a30"],
+        "cab": ["cab.tr212", "cab.a212"],
+        "comp": ["comp.studio-comp"],
+        "rvb": ["rvb.spring"],
+        "dly": ["dly.tape-echo"],
+        "mod": ["mod.ce-2"],
+        "eq": ["eq.6-band"],
+        "efx": ["efx.rc-boost"],
+        "gate": ["gate.noise-gate"]
+      },
+      "chain": { "gate": true, "comp": true, "efx": false, "amp": true, "eq": false, "mod": false, "dly": false, "rvb": true, "cab": true },
+      "paramPriors": {
+        "amp.gain": 25,
+        "amp.master": 65,
+        "amp.bass": 40,
+        "amp.mid": 60,
+        "amp.treble": 58,
+        "amp.bright": 0,
+        "comp.threshold": 40,
+        "comp.ratio": 35,
+        "rvb.level": 20,
+        "rvb.decay": 35,
+        "gate.sensitivity": 20,
+        "gate.decay": 50,
+        "cab.lowcut": 29,
+        "cab.hicut": 95
+      },
+      "match": [{ "instrumentKind": ["mandolin"], "score": 2 }],
+      "master": 50
+    },
+    "mandolin-acoustic": {
+      "name": "Mando Acous",
+      "template": "acoustic-ir-tone",
+      "models": {
+        "amp": ["amp.optima-air"],
+        "cab": ["cab.g-j15", "cab.user-ir-3"],
+        "comp": ["comp.k-comp"],
+        "eq": ["eq.10-band"],
+        "rvb": ["rvb.plate"],
+        "dly": ["dly.analog"],
+        "mod": ["mod.ce-2"],
+        "efx": ["efx.ac-boost"],
+        "gate": ["gate.noise-gate"]
+      },
+      "chain": { "gate": false, "comp": true, "efx": false, "amp": false, "eq": true, "mod": false, "dly": false, "rvb": true, "cab": true },
+      "paramPriors": {
+        "comp.level": 50,
+        "comp.sustain": 30,
+        "comp.clipping": 10,
+        "eq.eq_b3": 42,
+        "eq.eq_b8": 55,
+        "rvb.level": 15,
+        "rvb.decay": 25,
+        "cab.lowcut": 32,
+        "cab.hicut": 90
+      },
+      "match": [{ "descriptors": ["acoustic"], "instrumentKind": ["mandolin"], "score": 5 }],
+      "master": 50
+    }
+  }
+}
