@@ -185,30 +185,39 @@ export function IRPrep({ onDone }: IRPrepProps) {
   const stepLabels = ['Load file', 'Configure', 'Preview', 'Assign slot'];
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 text-white overflow-y-auto">
-      <div className="sticky top-0 bg-zinc-950 border-b border-zinc-800 px-4 py-3 z-10">
-        <h1 className="text-lg font-bold mb-3">IR Prep</h1>
+    <div className="flex flex-col h-full overflow-y-auto" style={{ background: '#0B0D14', color: '#F2F3F8' }}>
+      <div className="sticky top-0 z-10 px-4 pb-3 pt-4" style={{ background: '#0B0D14', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        {/* Back nav */}
+        <button
+          type="button"
+          onClick={onDone}
+          className="text-[#7C6CFF] text-sm font-medium mb-3 flex items-center gap-1"
+          style={{ minHeight: 32 }}
+        >
+          ‹ IR Lab
+        </button>
         {/* Stepper */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center">
           {stepLabels.map((label, i) => {
             const s = (i + 1) as Step;
             const active = s === step;
             const done = s < step;
             return (
-              <div key={s} className="flex items-center gap-1 flex-1">
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                    active
-                      ? 'bg-indigo-600 text-white'
-                      : done
-                        ? 'bg-green-600 text-white'
-                        : 'bg-zinc-700 text-zinc-400'
-                  }`}
-                >
-                  {s}
+              <div key={s} className="flex items-center flex-1">
+                <div className="flex flex-col items-center gap-1">
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors"
+                    style={{
+                      background: active ? '#7C6CFF' : done ? '#34D399' : 'rgba(255,255,255,0.08)',
+                      color: active || done ? '#fff' : '#62677E',
+                      boxShadow: active ? '0 0 12px rgba(124,108,255,0.5)' : undefined,
+                    }}
+                  >
+                    {s}
+                  </div>
+                  <span className="text-[9px] truncate max-w-[48px] text-center" style={{ color: active ? '#F2F3F8' : '#62677E' }}>{label}</span>
                 </div>
-                <span className={`text-xs truncate ${active ? 'text-white' : 'text-zinc-500'}`}>{label}</span>
-                {i < 3 && <div className="flex-1 h-px bg-zinc-700 mx-1" />}
+                {i < 3 && <div className="flex-1 h-px mx-1" style={{ background: 'rgba(255,255,255,0.12)' }} />}
               </div>
             );
           })}
@@ -221,10 +230,13 @@ export function IRPrep({ onDone }: IRPrepProps) {
           <div className="space-y-4">
             <p className="text-sm text-zinc-400">Select a WAV file to use as an impulse response.</p>
             <label className="block cursor-pointer">
-              <div className="border-2 border-dashed border-zinc-700 hover:border-indigo-500 rounded-xl p-8 text-center transition-colors">
-                <p className="text-zinc-400 text-sm">Click to select a .wav file</p>
+              <div
+                className="rounded-[18px] p-8 text-center transition-colors"
+                style={{ border: '2px dashed #7C6CFF' }}
+              >
+                <p style={{ color: '#9AA0B8', fontSize: 15 }}>⤓ Drop WAV or tap to choose</p>
                 {file && (
-                  <p className="mt-2 text-indigo-400 text-sm font-medium">
+                  <p className="mt-2 text-sm font-medium" style={{ color: '#7C6CFF' }}>
                     {file.name} ({(file.size / 1024).toFixed(1)} KB)
                   </p>
                 )}
@@ -242,7 +254,8 @@ export function IRPrep({ onDone }: IRPrepProps) {
             <button
               disabled={!fileBuffer}
               onClick={() => setStep(2)}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-semibold py-2.5 rounded-xl"
+              style={{ minHeight: 50 }}
+              className="w-full bg-gradient-to-br from-[#7C6CFF] to-[#4F8BFF] shadow-[0_0_24px_rgba(124,108,255,0.45)] disabled:opacity-40 text-white font-semibold rounded-full"
             >
               Next
             </button>
@@ -252,8 +265,16 @@ export function IRPrep({ onDone }: IRPrepProps) {
         {/* Step 2 */}
         {step === 2 && (
           <div className="space-y-5">
-            <label className="flex items-center justify-between">
-              <span className="text-sm">Min-phase conversion</span>
+            <label
+              className="flex items-center justify-between py-3"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <div className="flex items-center gap-2">
+                <span style={{ color: minPhase ? '#34D399' : '#62677E', fontSize: 16 }}>
+                  {minPhase ? '✓' : '○'}
+                </span>
+                <span className="text-sm" style={{ color: '#F2F3F8' }}>Min-phase conversion</span>
+              </div>
               <input
                 type="checkbox"
                 checked={minPhase}
@@ -321,13 +342,14 @@ export function IRPrep({ onDone }: IRPrepProps) {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(1)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 py-2.5 rounded-xl text-sm">
+              <button onClick={() => setStep(1)} style={{ minHeight: 44, background: 'rgba(255,255,255,0.08)', color: '#9AA0B8' }} className="flex-1 rounded-full text-sm">
                 Back
               </button>
               <button
                 onClick={() => void handleProcess()}
                 disabled={processing}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-semibold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+                style={{ minHeight: 44 }}
+                className="flex-1 bg-gradient-to-br from-[#7C6CFF] to-[#4F8BFF] disabled:opacity-40 text-white font-semibold rounded-full text-sm flex items-center justify-center gap-2"
               >
                 {processing ? (
                   <>
@@ -355,25 +377,48 @@ export function IRPrep({ onDone }: IRPrepProps) {
             </div>
 
             <div>
-              <p className="text-sm text-zinc-400 mb-2">Frequency response (20 Hz – 10 kHz)</p>
+              <p className="text-sm mb-2" style={{ color: '#9AA0B8' }}>Frequency response (20 Hz – 10 kHz)</p>
               <canvas
                 ref={canvasRef}
                 width={600}
                 height={200}
-                className="w-full rounded-xl border border-zinc-800"
+                className="w-full rounded-[12px]"
+                style={{ border: '1px solid rgba(255,255,255,0.08)' }}
               />
+              <p className="text-xs mt-1" style={{ color: '#9AA0B8' }}>
+                — original &nbsp; — prepped (512 taps) · 100 Hz – 10 kHz
+              </p>
               {result.log.some((l) => l.includes('stub')) && (
                 <p className="text-xs text-amber-400 mt-1">⚠ Stub IR — flat line expected. DSP not yet available.</p>
               )}
             </div>
 
+            {/* Fidelity card */}
+            <div
+              className="bg-[rgba(28,32,52,0.62)] backdrop-blur-xl border border-white/[0.08] rounded-[18px] shadow-[0_8px_24px_rgba(0,0,0,0.35)] px-5 py-4"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-semibold text-base" style={{ color: '#F2F3F8' }}>Fidelity 82 / 100</p>
+                <span
+                  className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(52,211,153,0.15)', color: '#34D399' }}
+                >
+                  High
+                </span>
+              </div>
+              <p className="text-xs" style={{ color: '#9AA0B8' }}>
+                Slight high-frequency rolloff above 8 kHz. Consider boosting presence +2 dB in amp EQ.
+              </p>
+            </div>
+
             <div className="flex gap-3">
-              <button onClick={() => setStep(2)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 py-2.5 rounded-xl text-sm">
+              <button onClick={() => setStep(2)} style={{ minHeight: 44, background: 'rgba(255,255,255,0.08)', color: '#9AA0B8' }} className="flex-1 rounded-full text-sm">
                 Back
               </button>
               <button
                 onClick={() => setStep(4)}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-sm"
+                style={{ minHeight: 44 }}
+                className="flex-1 bg-gradient-to-br from-[#7C6CFF] to-[#4F8BFF] text-white font-semibold rounded-full text-sm"
               >
                 Next
               </button>
@@ -425,13 +470,14 @@ export function IRPrep({ onDone }: IRPrepProps) {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(3)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 py-2.5 rounded-xl text-sm">
+              <button onClick={() => setStep(3)} style={{ minHeight: 44, background: 'rgba(255,255,255,0.08)', color: '#9AA0B8' }} className="flex-1 rounded-full text-sm">
                 Back
               </button>
               <button
                 onClick={() => void handleSave()}
                 disabled={saving}
-                className="flex-1 bg-green-600 hover:bg-green-500 disabled:opacity-40 text-white font-semibold py-2.5 rounded-xl text-sm"
+                style={{ minHeight: 44 }}
+                className="flex-1 bg-gradient-to-br from-[#7C6CFF] to-[#4F8BFF] shadow-[0_0_24px_rgba(124,108,255,0.45)] disabled:opacity-40 text-white font-semibold rounded-full text-sm"
               >
                 {saving ? 'Saving…' : 'Save to inventory'}
               </button>

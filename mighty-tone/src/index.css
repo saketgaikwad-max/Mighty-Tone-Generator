@@ -1,7 +1,20 @@
 @import "tailwindcss";
 
-/* Dark mode base */
+/* ── Midnight Studio design tokens ── */
 :root {
+  --color-bg-base: #0B0D14;
+  --color-bg-raised: #141826;
+  --color-glass-fill: rgba(28, 32, 52, 0.62);
+  --color-glass-stroke: rgba(255, 255, 255, 0.08);
+  --color-text-primary: #F2F3F8;
+  --color-text-secondary: #9AA0B8;
+  --color-text-tertiary: #62677E;
+  --color-accent-500: #7C6CFF;
+  --color-accent-400: #9A8CFF;
+  --color-accent-blue: #4F8BFF;
+  --color-conf-high: #34D399;
+  --color-conf-med: #FBBF24;
+  --color-conf-low: #F87171;
   color-scheme: dark;
 }
 
@@ -12,7 +25,8 @@ body {
 }
 
 body {
-  @apply bg-black text-white;
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
@@ -20,5 +34,30 @@ body {
 #root {
   height: 100%;
   height: 100dvh;
-  @apply flex flex-col overflow-hidden;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Momentum scrolling on all scrollable containers */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area insets for iPhone notch / home indicator */
+.tab-bar-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }
