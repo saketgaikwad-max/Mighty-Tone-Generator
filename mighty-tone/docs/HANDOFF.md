@@ -85,3 +85,12 @@ Each agent: small commits per screen/component + `npm run build` + `git push ori
 
 ### After all 3 finish:
 Run `npm run verify` + `npm run build` locally, then do one final push. The GitHub Actions workflow deploys automatically on push to main.
+
+### Token usage strategy for the new chat
+- **Do NOT read** PLAN.md, ARCHITECTURE.md, SOURCES.md, ESTIMATES.md, TRACEABILITY.md — they are not needed for UI work.
+- **Read only:** this HANDOFF.md + the mocks image + DESIGN_SYSTEM.md (first 60 lines only). That's it.
+- **Each agent gets a tight brief** (file paths + what to build + stop rule). No agent reads docs beyond what's listed in its brief.
+- **Models:** Sonnet for all 3 UI agents (no Opus needed — this is layout/styling work, not DSP math or engine logic).
+- **One attempt per problem** — if a component doesn't render correctly, fix it once and move on. No loops.
+- **Stop rules are hard** — each agent stops the moment its commits are pushed. It does not review other agents' work.
+- **No agent installs new npm packages** unless strictly necessary. All needed packages (Konsta, Tailwind, Lucide, Radix) are already installed.
