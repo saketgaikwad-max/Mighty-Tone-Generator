@@ -2,6 +2,13 @@
 
 Full plan: `PLAN.md`, `ARCHITECTURE.md`, `AGENTS.md`, `ESTIMATES.md`, `TRACEABILITY.md`, `SOURCES.md` (this folder). Design: `../design/DESIGN_SYSTEM.md`, `../design/mockups/index.html`.
 
+## Setup already DONE by the user — do NOT ask again
+- GitHub repo EXISTS: https://github.com/saketgaikwad-max/Mighty-Tone-Generator (public, branch `main`, has a README commit). Do not create a new repo.
+- Push access WORKS from this Mac: a fine-grained token (Contents/Pages/Workflows read-write, this repo only) is stored in the macOS Keychain via `git credential-osxkeychain` for user `saketgaikwad-max`; a `git push --dry-run` succeeded on 2026-10-19. Use plain HTTPS remotes; never ask for or print the token. Git commands that touch the Keychain need to run outside the sandbox (required_permissions: all).
+- To use it: `git clone https://github.com/saketgaikwad-max/Mighty-Tone-Generator.git` into `/Users/saket.gaikwad/Guitar/mighty-tone/app` (or add it as `origin` to the project folder), then commit and push to `main`.
+- Gemini API key: user has it; it is NEVER given to agents. The app's Profile screen stores it on-device (S4). Use a mock in tests.
+- GitHub Pages: not enabled yet; guide the user through Settings > Pages (source: GitHub Actions) when the first deploy workflow is pushed.
+
 ## Decisions (final)
 - Installable PWA (React + Vite + TS), GitHub Pages: repo `saketgaikwad-max/Mighty-Tone-Generator` (push creds in macOS Keychain). No backend, no paid services, data on device + backup/export.
 - Amp: NUX Mighty Space, firmware 20230331, MightyAmp iOS 3.6.6. Patch delivery via NUX QR (`nux://MightyAmp:` + base64([0x0F,0x01] + 113 bytes)); `.mspatch` = 8404 bytes, preset at offset 4. Build new patches on top of real fixture QRs.
