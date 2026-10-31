@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { getLatestVersion, listSessions, listTones, type Session, type Tone } from '../store/db.ts';
 import { QrView } from '../ui/components/QrView.tsx';
+import { ToneFilters } from '../ui/components/ToneFilters.tsx';
+import { applyToneFilter } from '../ui/utils/toneFilter.ts';
 
 export function Library() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [tones, setTones] = useState<Tone[]>([]);
   const [toneQrs, setToneQrs] = useState<Record<number, string>>({});
+  const [activeFilter, setActiveFilter] = useState('all');
 
   useEffect(() => {
     void listSessions().then(setSessions);
@@ -14,6 +17,7 @@ export function Library() {
 
   async function openSession(session: Session) {
     setSelectedSession(session);
+    setActiveFilter('all');
     const list = await listTones(session.id!);
     setTones(list);
     // Load QR strings for each tone
@@ -26,6 +30,7 @@ export function Library() {
   }
 
   if (selectedSession) {
+    const filtered = applyToneFilter(tones, activeFilter);
     return (
       <div className="flex flex-col h-full bg-black">
         <div className="flex items-center gap-2 p-4 border-b border-zinc-800">
@@ -38,11 +43,12 @@ export function Library() {
           </button>
           <h1 className="text-white text-base font-semibold truncate">{selectedSession.name}</h1>
         </div>
+        <ToneFilters tones={tones} activeFilter={activeFilter} onFilterChange={setActiveFilter} />
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-          {tones.length === 0 && (
+          {filtered.length === 0 && (
             <p className="text-zinc-600 text-sm text-center mt-8">No tones in this session.</p>
           )}
-          {tones.map((tone) => (
+          {filtered.map((tone) => (
             <div key={tone.id} className="bg-zinc-900 rounded-2xl p-4 flex gap-4 items-center">
               {toneQrs[tone.id!] ? (
                 <QrView qrString={toneQrs[tone.id!]!} size={72} />
