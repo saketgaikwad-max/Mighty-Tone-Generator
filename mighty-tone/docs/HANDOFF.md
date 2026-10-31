@@ -42,3 +42,46 @@ QR-to-preset mapping **verified by decoding the payloads** (ADR-005): model, eve
 - Delay-time calibration fixture (later), or confirm preset 3 DLY shows ≈692 ms.
 - Master byte 0 / empty name in official QR exports: settle at U3 (needs QR render from S2).
 - Rotate GitHub token at end.
+
+---
+
+## NEXT TASK: UI Polish Pass (start here in a new chat)
+
+**Status:** All slices S1–S5 done, app is live at https://saketgaikwad-max.github.io/Mighty-Tone-Generator/
+The logic (codec, engine, store, DSP, LLM) is fully built and tested (125 tests). The UI is functional but does not match the design mocks. This pass brings the app visually and functionally in line with the mocks.
+
+**Design mocks:** `/Users/saket.gaikwad/Guitar/mighty-tone/design/mockups/png/all-screens.png` — READ THIS IMAGE before starting any screen.
+**Design system:** `/Users/saket.gaikwad/Guitar/mighty-tone/design/DESIGN_SYSTEM.md` — "Midnight Studio" dark theme, Konsta UI v5, Tailwind v4, glass cards, violet→blue accent glow.
+
+**Git:** repo root `/Users/saket.gaikwad/Guitar`, remote `origin` = https://github.com/saketgaikwad-max/Mighty-Tone-Generator. Push creds in macOS Keychain (run git push with `required_permissions: all`). Commit identity: `-c user.name="Saket Gaikwad" -c user.email="saketgaikwad-max@users.noreply.github.com"`.
+
+**Tests:** `npm run verify` must stay green (125 tests) after every change. `npm run build` must pass before every push.
+
+### What exists in src/screens/ and src/ui/components/
+- `SessionChat.tsx` — works but bare: plain chips + text input, QR card with no rich detail, variants not styled
+- `Library.tsx` — basic list, no Saved Tones grid, no tone artwork
+- `Profile.tsx` — has Gemini key + backup buttons but plain, no instruments list
+- `IRInventory.tsx` + `IRPrep.tsx` — functional stubs, close to mock but needs polish
+- `QrView.tsx`, `VersionTimeline.tsx`, `LockControls.tsx`, `DelayHelper.tsx`, `VariantCarousel.tsx` — all exist
+
+### Work to do — launch these 3 agents IN PARALLEL (Sonnet for all):
+
+**Agent A — Sessions + Chat response card:**
+- Sessions list screen: search bar, list of past sessions (name, tone count, date), "New session +" button. Tap → opens chat.
+- Chat response card: amp name large, archetype badge, confidence score, 3-line patch summary (describePatch), QR large and tappable (fullscreen on tap), variant swipe cards (3) below, feedback text input, "Signal chain" expand button.
+- Use glass card style from design system (dark bg, blur, violet accent on active state).
+
+**Agent B — Library (Saved Tones) + Profile:**
+- Saved Tones: grid of tone cards (2-col), each with a generated colour gradient "artwork" based on archetype (clean=blue, crunch=orange, lead=red, acoustic=green), tone name, instrument badge, archetype chip. Filter chips at top (All / archetype / instrument).
+- Profile: grouped list sections — Instruments (list of user's instruments with add/remove), Mighty Space section (firmware info), Gemini key field, Backup section (export/import buttons), Clear data. Match the mock's grouped iOS list style.
+
+**Agent C — Signal chain view + Delay helper modal + general polish:**
+- Signal chain: a horizontal scrollable block chain (Gate → Comp → EFX → Amp → EQ → Mod → Dly → Rvb → Cab). Each block: icon, name, on/off toggle. Tap → expand params as sliders. Read-only in v1 (no param editing, just display).
+- Delay helper: full bottom sheet modal (not a widget). BPM number input, note division segmented control (1/4, 1/8, dotted 1/8, triplet), model picker dropdown, large ms readout, "Apply" button.
+- General: ensure all screens use the Midnight Studio token colours (near-black #0a0a0f bg, glass cards, violet #7c3aed accent), system font, 44pt touch targets, safe area insets.
+
+### Per-agent commit pattern:
+Each agent: small commits per screen/component + `npm run build` + `git push origin main`.
+
+### After all 3 finish:
+Run `npm run verify` + `npm run build` locally, then do one final push. The GitHub Actions workflow deploys automatically on push to main.
