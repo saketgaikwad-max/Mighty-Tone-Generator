@@ -12,7 +12,11 @@ interface IRPrepProps {
   onDone?: () => void;
 }
 
-// Stub DSP — replaced by real pipeline once S5-DSP delivers src/dsp/pipeline.ts
+// Worker response protocol (matches src/dsp/worker.ts)
+type WorkerResponse =
+  | { type: 'result'; result: IrPrepResult }
+  | { type: 'error'; message: string };
+
 async function runPipeline(_buf: ArrayBuffer, _opts: PipelineOpts): Promise<IrPrepResult> {
   // Try to load real worker; fall back to stub gracefully
   try {
@@ -20,15 +24,33 @@ async function runPipeline(_buf: ArrayBuffer, _opts: PipelineOpts): Promise<IrPr
     const workerUrl = new URL('../dsp/worker.ts', import.meta.url);
     const worker = new Worker(workerUrl, { type: 'module' });
     return await new Promise<IrPrepResult>((resolve, reject) => {
-      worker.onmessage = (e: MessageEvent<IrPrepResult>) => {
+      worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
         worker.terminate();
-        resolve(e.data);
+        const msg = e.data;
+        if (msg.type === 'result') {
+          resolve(msg.result);
+        } else {
+          reject(new Error(msg.message));
+        }
       };
       worker.onerror = (_err) => {
         worker.terminate();
         reject(new Error('Worker error'));
       };
-      worker.postMessage({ buffer: _buf, opts: _opts });
+      // Worker protocol: { type: 'prepare', wav: ArrayBuffer, options: Partial<IrPrepOptions> }
+      // Note: blend requires decoded Float32Array — omit for now (blend is optional)
+      worker.postMessage(
+        {
+          type: 'prepare',
+          wav: _buf,
+          options: {
+            minPhase: _opts.minPhase,
+            trimThresholdDb: _opts.trimThresholdDb,
+            normalisePeak: _opts.targetPeak,
+          },
+        },
+        [_buf],
+      );
     });
   } catch {
     // DSP not yet available — return stub result
