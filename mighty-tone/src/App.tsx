@@ -1,7 +1,8 @@
 import { Tabbar, TabbarLink } from 'konsta/react';
-import { BookOpen, Layers, MessageSquare, User } from 'lucide-react';
+import { BookOpen, HelpCircle, Layers, MessageSquare, User } from 'lucide-react';
 import { useState } from 'react';
 
+import { Help } from './screens/Help.js';
 import { IRInventory } from './screens/IRInventory.js';
 import { IRPrep } from './screens/IRPrep.js';
 import { Library } from './screens/Library.js';
@@ -9,7 +10,7 @@ import { Profile } from './screens/Profile.js';
 import { SessionChat } from './screens/SessionChat.js';
 import { SessionsList } from './screens/SessionsList.js';
 
-type Tab = 'sessions' | 'library' | 'profile' | 'irlab';
+type Tab = 'sessions' | 'library' | 'profile' | 'irlab' | 'guide';
 type IRView = 'inventory' | 'prep';
 type SessionsView = 'list' | 'chat';
 
@@ -75,6 +76,7 @@ export function App() {
         {activeTab === 'irlab' && irView === 'prep' && (
           <IRPrep onDone={() => setIrView('inventory')} />
         )}
+        {activeTab === 'guide' && <Help />}
       </div>
 
       {/* Bottom tab bar */}
@@ -88,7 +90,7 @@ export function App() {
         <TabbarLink
           active={activeTab === 'library'}
           onClick={() => handleTabChange('library')}
-          label="Library"
+          label="Saved Tones"
           icon={<BookOpen size={22} />}
         />
         <TabbarLink
@@ -102,6 +104,12 @@ export function App() {
           onClick={() => handleTabChange('irlab')}
           label="IR Lab"
           icon={<Layers size={22} />}
+        />
+        <TabbarLink
+          active={activeTab === 'guide'}
+          onClick={() => handleTabChange('guide')}
+          label="Guide"
+          icon={<HelpCircle size={22} />}
         />
       </Tabbar>
     </div>

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { describePatch } from '../codec/describe.ts';
 import type { BlockKind } from '../contracts/blocks.ts';
+import { BLOCK_KINDS } from '../contracts/blocks.ts';
 import type { Patch } from '../contracts/patch.ts';
 import type { ToneMeta } from '../engine/index.ts';
-import { encodePreset } from '../codec/preset.ts';
-import { buildQrString } from '../codec/qr-string.ts';
+import { encodePreset, decodePreset } from '../codec/preset.ts';
+import { buildQrString, parseQrString } from '../codec/qr-string.ts';
 import { createSession, saveTone } from '../store/db.ts';
 import { generateToneAsync } from '../services/generateTone.ts';
 import { QrView } from '../ui/components/QrView.tsx';
@@ -12,6 +14,8 @@ import { VersionTimeline } from '../ui/components/VersionTimeline.tsx';
 import { LockControls } from '../ui/components/LockControls.tsx';
 import { DelayHelper } from '../ui/components/DelayHelper.tsx';
 import { generateVariants } from '../engine/variants.ts';
+import { buildHandoffPrompt, parseHandoffResponse } from '../llm/handoff.ts';
+import { solve } from '../engine/solve.ts';
 
 // ── design tokens ─────────────────────────────────────────────────────────────
 const GLASS =
@@ -45,6 +49,217 @@ const CHAIN_LABELS: Record<BlockKind, string> = {
   dly: 'Dly',
   rvb: 'Rvb',
 };
+
+const FEEDBACK_TAGS = ['Muddy','Harsh','Thin','Boomy','Too much gain','Too little gain','Too wet','Too dry','Buried in mix','Too bright','Too dark'];
+const CHIP_ACTIVE = 'bg-[rgba(124,108,255,0.25)] border-[#7C6CFF] text-white';
+const CHIP_INACTIVE = 'bg-[#141826] border-white/[0.08] text-[#9AA0B8]';
+
+// ── Feedback bottom sheet ─────────────────────────────────────────────────────
+interface FeedbackSheetProps {
+  locked: BlockKind[];
+  onClose: () => void;
+  onSend: (prompt: string, newLocked: BlockKind[]) => void;
+}
+
+function FeedbackSheet({ locked, onClose, onSend }: FeedbackSheetProps) {
+  const [tags, setTags] = useState<string[]>([]);
+  const [freeText, setFreeText] = useState('');
+  const [lockedBlocks, setLockedBlocks] = useState<BlockKind[]>(locked);
+  const [variantCount, setVariantCount] = useState(1);
+
+  function toggleTag(tag: string) {
+    setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  }
+  function toggleBlock(b: BlockKind) {
+    setLockedBlocks(prev => prev.includes(b) ? prev.filter(x => x !== b) : [...prev, b]);
+  }
+
+  function handleSend() {
+    let prompt = [...tags, freeText.trim()].filter(Boolean).join('. ');
+    if (!prompt) prompt = 'Adjust tone';
+    if (variantCount > 1) prompt += ` Give me ${variantCount} variants.`;
+    onSend(prompt, lockedBlocks);
+  }
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-end"
+      style={{ background: 'rgba(0,0,0,0.6)' }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full bg-[#171b2c] rounded-t-[26px] border-t border-white/[0.08] overflow-y-auto"
+        style={{ maxHeight: '70vh' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
+        </div>
+        {/* Title row */}
+        <div className="flex items-center px-4 pb-3 border-b border-white/[0.06]">
+          <button type="button" onClick={onClose} className="text-[#9AA0B8] text-[15px]" style={{ minWidth: 44, minHeight: 44 }}>Cancel</button>
+          <p className="flex-1 text-center text-[#F2F3F8] font-semibold text-[17px]">How did it sound?</p>
+          <button type="button" onClick={handleSend} className={`${GRADIENT_BTN} px-4 py-2 text-[14px]`} style={{ minHeight: 44 }}>Send</button>
+        </div>
+        <div className="px-4 py-4 flex flex-col gap-5">
+          {/* Quick tags */}
+          <div>
+            <p className="text-[#62677E] text-[11px] uppercase tracking-wider font-medium mb-2">Quick tags</p>
+            <div className="flex flex-wrap gap-2">
+              {FEEDBACK_TAGS.map(tag => (
+                <button key={tag} type="button" onClick={() => toggleTag(tag)}
+                  className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all ${tags.includes(tag) ? CHIP_ACTIVE : CHIP_INACTIVE}`}
+                  style={{ minHeight: 36 }}
+                >{tag}</button>
+              ))}
+            </div>
+          </div>
+          {/* Tell me more */}
+          <div>
+            <p className="text-[#62677E] text-[11px] uppercase tracking-wider font-medium mb-2">Tell me more</p>
+            <textarea
+              rows={3}
+              value={freeText}
+              onChange={e => setFreeText(e.target.value)}
+              placeholder="Describe what you'd change…"
+              className="w-full bg-[rgba(28,32,52,0.62)] border border-white/[0.08] rounded-[12px] px-3 py-2 text-[#F2F3F8] text-[14px] outline-none placeholder:text-[#62677E] resize-none"
+            />
+          </div>
+          {/* Lock blocks */}
+          <div>
+            <p className="text-[#62677E] text-[11px] uppercase tracking-wider font-medium mb-2">Lock blocks (keep these)</p>
+            <div className="flex flex-wrap gap-2">
+              {BLOCK_KINDS.map(b => (
+                <button key={b} type="button" onClick={() => toggleBlock(b)}
+                  className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-all ${lockedBlocks.includes(b) ? CHIP_ACTIVE : CHIP_INACTIVE}`}
+                  style={{ minHeight: 36 }}
+                >{CHAIN_LABELS[b]}</button>
+              ))}
+            </div>
+          </div>
+          {/* Want options */}
+          <div>
+            <p className="text-[#62677E] text-[11px] uppercase tracking-wider font-medium mb-2">Want options?</p>
+            <div className="flex gap-2">
+              {[1,2,3,4,5].map(n => (
+                <button key={n} type="button" onClick={() => setVariantCount(n)}
+                  className={`w-10 h-10 rounded-full text-[14px] font-semibold border transition-all ${variantCount === n ? CHIP_ACTIVE : CHIP_INACTIVE}`}
+                >{n}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ── LLM Handoff bottom sheet ──────────────────────────────────────────────────
+interface HandoffSheetProps {
+  latestPrompt: string;
+  instrument: string;
+  sessionId: number | null;
+  onClose: () => void;
+  onToneSaved: (card: ToneCard) => void;
+}
+
+function HandoffSheet({ latestPrompt, instrument, sessionId, onClose, onToneSaved }: HandoffSheetProps) {
+  const prompt = buildHandoffPrompt(latestPrompt, instrument);
+  const [pasted, setPasted] = useState('');
+  const [msg, setMsg] = useState<string | null>(null);
+  const [building, setBuilding] = useState(false);
+
+  function copyAndOpen(url: string) {
+    navigator.clipboard.writeText(prompt).catch(() => {/* ignore */});
+    window.open(url, '_blank');
+  }
+
+  async function handleBuildTone() {
+    const intent = parseHandoffResponse(pasted);
+    if (!intent) { setMsg('Could not parse response. Ensure valid JSON.'); return; }
+    setBuilding(true);
+    try {
+      const { patch, ruleTrace, archetype, confidence } = solve(intent);
+      const meta: ToneMeta = { archetype, ruleTrace, confidence, unknownTerms: intent.unknownTerms };
+      let sid = sessionId;
+      if (sid === null) {
+        const session = await createSession(`Handoff: ${archetype}`);
+        sid = session.id!;
+      }
+      const preset = encodePreset(patch);
+      const qrString = buildQrString(preset);
+      const { tone, version } = await saveTone(sid, patch, meta);
+      const card: ToneCard = {
+        id: crypto.randomUUID(),
+        toneId: tone.id!,
+        versionId: version.id!,
+        qrString,
+        patch,
+        meta,
+      };
+      onToneSaved(card);
+      onClose();
+    } catch (err) {
+      setMsg(`Error: ${String(err)}`);
+    } finally {
+      setBuilding(false);
+    }
+  }
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-end"
+      style={{ background: 'rgba(0,0,0,0.6)' }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full bg-[#171b2c] rounded-t-[26px] border-t border-white/[0.08] overflow-y-auto"
+        style={{ maxHeight: '70vh' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
+        </div>
+        <div className="flex items-center px-4 pb-3 border-b border-white/[0.06]">
+          <p className="flex-1 text-[#F2F3F8] font-semibold text-[17px]">Ask another AI</p>
+          <button type="button" onClick={onClose} className="text-[#9AA0B8] text-[15px]" style={{ minWidth: 44, minHeight: 44 }}>Close</button>
+        </div>
+        <div className="px-4 py-4 flex flex-col gap-4">
+          <p className="text-[#9AA0B8] text-[13px]">No Gemini key set. Copy this prompt, paste the answer back.</p>
+          <div className="flex gap-3">
+            <button type="button" onClick={() => copyAndOpen('https://chatgpt.com')}
+              className="flex-1 py-3 rounded-[14px] bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#F2F3F8] text-[14px] font-semibold"
+              style={{ minHeight: 44 }}>Ask ChatGPT</button>
+            <button type="button" onClick={() => copyAndOpen('https://claude.ai')}
+              className="flex-1 py-3 rounded-[14px] bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#F2F3F8] text-[14px] font-semibold"
+              style={{ minHeight: 44 }}>Ask Claude</button>
+          </div>
+          <div>
+            <p className="text-[#62677E] text-[11px] uppercase tracking-wider font-medium mb-2">Copied prompt</p>
+            <textarea readOnly value={prompt} rows={4}
+              className="w-full bg-[rgba(28,32,52,0.62)] border border-white/[0.08] rounded-[12px] px-3 py-2 text-[#9AA0B8] text-[12px] font-mono resize-none outline-none"
+              onClick={e => (e.target as HTMLTextAreaElement).select()} />
+          </div>
+          <div>
+            <p className="text-[#62677E] text-[11px] uppercase tracking-wider font-medium mb-2">Paste answer</p>
+            <textarea rows={3} value={pasted} onChange={e => setPasted(e.target.value)}
+              placeholder='{"archetype":"crunch","descriptors":["warm"],"deltas":{"amp.gain":20}}'
+              className="w-full bg-[rgba(28,32,52,0.62)] border border-white/[0.08] rounded-[12px] px-3 py-2 text-[#F2F3F8] text-[12px] font-mono resize-none outline-none placeholder:text-[#62677E]"
+            />
+          </div>
+          <button type="button" onClick={() => void handleBuildTone()} disabled={!pasted.trim() || building}
+            className={`${GRADIENT_BTN} py-3 text-[15px] disabled:opacity-40`}
+            style={{ minHeight: 44 }}
+          >Build tone from reply</button>
+          {msg && <p className="text-[#9AA0B8] text-[13px]">{msg}</p>}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 // ── confidence badge ──────────────────────────────────────────────────────────
 function ConfidenceBadge({ value }: { value: number }) {
@@ -104,6 +319,9 @@ interface ToneResponseCardProps {
   onSave: () => Promise<void>;
   onSaveVariant: (patch: Patch, qrString: string) => Promise<void>;
   onApplyDelay: (byte: number, modelId: string) => Promise<void>;
+  onRestore: (qrString: string) => void;
+  locked: BlockKind[];
+  onFeedbackSend: (prompt: string, newLocked: BlockKind[]) => void;
 }
 
 function ToneResponseCard({
@@ -114,12 +332,14 @@ function ToneResponseCard({
   onSave,
   onSaveVariant,
   onApplyDelay,
+  onRestore,
+  locked,
+  onFeedbackSend,
 }: ToneResponseCardProps) {
   const [editingName, setEditingName] = useState(false);
   const [toneName, setToneName] = useState(card.meta.archetype ?? 'Tone');
   const [showVariants, setShowVariants] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [feedback, setFeedback] = useState('');
   const [showDelay, setShowDelay] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -258,25 +478,13 @@ function ToneResponseCard({
         </button>
       </div>
 
-      {/* ── Feedback input ── */}
+      {/* ── Feedback bottom sheet ── */}
       {showFeedback && (
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={feedback}
-            onChange={e => setFeedback(e.target.value)}
-            placeholder="What would you change?"
-            className="flex-1 bg-[rgba(28,32,52,0.62)] border border-white/[0.08] rounded-[12px] px-3 py-2 text-[#F2F3F8] text-[14px] outline-none placeholder:text-[#62677E]"
-            autoFocus
-          />
-          <button
-            type="button"
-            onClick={() => { setFeedback(''); setShowFeedback(false); }}
-            className={`${GRADIENT_BTN} px-4 py-2 text-[14px]`}
-          >
-            Send
-          </button>
-        </div>
+        <FeedbackSheet
+          locked={locked}
+          onClose={() => setShowFeedback(false)}
+          onSend={(prompt, newLocked) => { setShowFeedback(false); onFeedbackSend(prompt, newLocked); }}
+        />
       )}
 
       {/* ── Delay helper ── */}
@@ -289,7 +497,7 @@ function ToneResponseCard({
 
       {/* ── Version history ── */}
       {isExpanded && card.toneId > 0 && (
-        <VersionTimeline toneId={card.toneId} onRestore={() => {/* TODO */}} />
+        <VersionTimeline toneId={card.toneId} onRestore={onRestore} />
       )}
 
       {/* ── Variants row ── */}
@@ -350,7 +558,9 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [locked, setLocked] = useState<BlockKind[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showHandoff, setShowHandoff] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const geminiKeyMissing = !localStorage.getItem('gemini-key');
 
   const toneCards = messages.filter((m): m is { type: 'tone'; card: ToneCard } => m.type === 'tone').map(m => m.card);
   const latestCard = toneCards.length > 0 ? toneCards[toneCards.length - 1]! : null;
@@ -402,6 +612,75 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
       e.preventDefault();
       void handleSend();
     }
+  }
+
+  async function handleRestore(qrString: string) {
+    const parsed = parseQrString(qrString);
+    if (!parsed.ok) return;
+    try {
+      const patch = decodePreset(parsed.preset, parsed.header);
+      const meta: ToneMeta = { archetype: 'Restored', confidence: 0, ruleTrace: [], unknownTerms: [] };
+      let sid = sessionId;
+      if (sid === null) {
+        const session = await createSession('Restored');
+        sid = session.id!;
+        setSessionId(sid);
+      }
+      const preset = encodePreset(patch);
+      const newQr = buildQrString(preset);
+      const { tone, version } = await saveTone(sid, patch, meta);
+      const card: ToneCard = {
+        id: crypto.randomUUID(),
+        toneId: tone.id!,
+        versionId: version.id!,
+        qrString: newQr,
+        patch,
+        meta,
+      };
+      setMessages(prev => [...prev, { type: 'tone', card }]);
+    } catch (err) {
+      console.error('handleRestore failed', err);
+    }
+  }
+
+  function handleFeedbackSend(prompt: string, newLocked: BlockKind[]) {
+    setLocked(newLocked);
+    setInput(prompt);
+    // Trigger send with the feedback prompt
+    const promptTrimmed = prompt.trim();
+    if (!promptTrimmed || loading) return;
+    setInput('');
+    setLoading(true);
+    setMessages(prev => [...prev, { type: 'user', text: promptTrimmed }]);
+    setTimeout(async () => {
+      try {
+        let sid = sessionId;
+        const { patch, meta } = await generateToneAsync(promptTrimmed, instrument, newLocked);
+        if (sid === null) {
+          const name = `${meta.archetype} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+          const session = await createSession(name);
+          sid = session.id!;
+          setSessionId(sid);
+        }
+        const preset = encodePreset(patch);
+        const qrString = buildQrString(preset);
+        const { tone, version } = await saveTone(sid, patch, meta);
+        const card: ToneCard = {
+          id: crypto.randomUUID(),
+          toneId: tone.id!,
+          versionId: version.id!,
+          qrString,
+          patch,
+          meta,
+          userPrompt: promptTrimmed,
+        };
+        setMessages(prev => [...prev, { type: 'tone', card }]);
+      } catch (err) {
+        console.error('feedbackSend failed', err);
+      } finally {
+        setLoading(false);
+      }
+    }, 0);
   }
 
   async function handleSaveVariant(patch: Patch, qrString: string) {
@@ -507,6 +786,9 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
                 onSave={() => handleSaveTone(card)}
                 onSaveVariant={handleSaveVariant}
                 onApplyDelay={handleApplyDelay}
+                onRestore={qr => void handleRestore(qr)}
+                locked={locked}
+                onFeedbackSend={handleFeedbackSend}
               />
             </div>
           );
@@ -579,6 +861,16 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
           disabled={loading}
           style={{ minHeight: 44, maxHeight: 120 }}
         />
+        {toneCards.length > 0 && geminiKeyMissing && (
+          <button
+            type="button"
+            onClick={() => setShowHandoff(true)}
+            className="shrink-0 px-3 py-2 rounded-full bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#9AA0B8] text-[13px] font-medium"
+            style={{ minHeight: 44 }}
+          >
+            Ask AI
+          </button>
+        )}
         <button
           type="button"
           onClick={() => void handleSend()}
@@ -589,6 +881,17 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
           ↑
         </button>
       </div>
+
+      {/* Handoff sheet */}
+      {showHandoff && (
+        <HandoffSheet
+          latestPrompt={messages.filter(m => m.type === 'user').map(m => (m as { type: 'user'; text: string }).text).at(-1) ?? ''}
+          instrument={instrument}
+          sessionId={sessionId}
+          onClose={() => setShowHandoff(false)}
+          onToneSaved={card => setMessages(prev => [...prev, { type: 'tone', card }])}
+        />
+      )}
     </div>
   );
 }
