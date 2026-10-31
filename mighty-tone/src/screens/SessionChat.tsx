@@ -47,6 +47,7 @@ export function SessionChat({ onGoToIrLab }: SessionChatProps = {}) {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [locked, setLocked] = useState<BlockKind[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const latestCard = messages.length > 0 ? messages[messages.length - 1]! : null;
@@ -236,17 +237,29 @@ export function SessionChat({ onGoToIrLab }: SessionChatProps = {}) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Lock controls */}
-      <LockControls locked={locked} onChange={setLocked} />
+      {/* Collapsible settings panel (Lock + BPM) */}
+      {settingsOpen && (
+        <div className="border-t border-zinc-800 bg-zinc-950 px-4 py-3 flex flex-col gap-2">
+          <LockControls locked={locked} onChange={setLocked} />
+          <DelayHelper
+            latestPatch={latestCard?.patch ?? null}
+            onApply={(byte, modelId) => void handleApplyDelay(byte, modelId)}
+          />
+        </div>
+      )}
 
-      {/* Delay Helper */}
-      <DelayHelper
-        latestPatch={latestCard?.patch ?? null}
-        onApply={(byte, modelId) => void handleApplyDelay(byte, modelId)}
-      />
-
-      {/* Instrument chips */}
-      <div className="flex gap-2 px-4 py-2 overflow-x-auto border-t border-zinc-800 bg-zinc-950">
+      {/* Instrument chips + settings toggle */}
+      <div className="flex gap-2 px-3 py-2 overflow-x-auto border-t border-zinc-800 bg-zinc-950 items-center">
+        <button
+          type="button"
+          onClick={() => setSettingsOpen((o) => !o)}
+          className={`shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-sm transition-colors ${
+            settingsOpen ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-zinc-400'
+          }`}
+          aria-label="Toggle settings"
+        >
+          ⚙
+        </button>
         {INSTRUMENTS.map((inst) => (
           <button
             key={inst.id}

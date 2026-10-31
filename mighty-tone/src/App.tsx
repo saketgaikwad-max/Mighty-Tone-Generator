@@ -1,4 +1,4 @@
-import { Page, Tabbar, TabbarLink } from 'konsta/react';
+import { Tabbar, TabbarLink } from 'konsta/react';
 import { BookOpen, Layers, MessageSquare, User } from 'lucide-react';
 import { useState } from 'react';
 
@@ -21,7 +21,7 @@ export function App() {
   }
 
   return (
-    <Page className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-black">
       {/* Screen content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === 'sessions' && <SessionChat onGoToIrLab={() => handleTabChange('irlab')} />}
@@ -62,6 +62,6 @@ export function App() {
           icon={<Layers size={22} />}
         />
       </Tabbar>
-    </Page>
+    </div>
   );
 }
