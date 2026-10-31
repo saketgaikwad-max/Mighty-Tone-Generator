@@ -1,28 +1,32 @@
 import Dexie, { type EntityTable } from 'dexie';
+import type { Patch } from '../contracts/patch.ts';
+import type { ToneMeta } from '../engine/index.ts';
+import { encodePreset } from '../codec/preset.ts';
+import { buildQrString } from '../codec/qr-string.ts';
 
 /** A chat session containing a sequence of tone requests. */
 export interface Session {
-  id: string;
-  title: string;
+  id?: number;
+  name: string;
   createdAt: number;
-  updatedAt: number;
 }
 
 /** A tone preset generated from a session message. */
 export interface Tone {
-  id: string;
-  sessionId: string;
-  name: string;
-  description: string;
+  id?: number;
+  sessionId: number;
+  archetype: string;
+  instrument: string;
   createdAt: number;
 }
 
 /** A versioned snapshot of a tone's patch bytes. */
 export interface Version {
-  id: string;
-  toneId: string;
-  patchBytes: Uint8Array;
+  id?: number;
+  toneId: number;
   qrString: string;
+  patchJson: string;
+  meta: string;
   createdAt: number;
 }
 
@@ -34,11 +38,58 @@ class MightyToneDb extends Dexie {
   constructor() {
     super('MightyToneDb');
     this.version(1).stores({
-      sessions: 'id, updatedAt',
-      tones: 'id, sessionId, createdAt',
-      versions: 'id, toneId, createdAt',
+      sessions: '++id, createdAt, name',
+      tones: '++id, sessionId, createdAt, archetype, instrument',
+      versions: '++id, toneId, createdAt, qrString, patchJson, meta',
     });
   }
 }
 
 export const db = new MightyToneDb();
+
+export async function createSession(name: string): Promise<Session> {
+  const createdAt = Date.now();
+  const id = await db.sessions.add({ name, createdAt } as Session);
+  return { id: id as number, name, createdAt };
+}
+
+export async function saveTone(
+  sessionId: number,
+  patch: Patch,
+  meta: ToneMeta,
+): Promise<{ tone: Tone; version: Version }> {
+  const createdAt = Date.now();
+  const preset = encodePreset(patch);
+  const qrString = buildQrString(preset);
+  const tone: Omit<Tone, 'id'> = {
+    sessionId,
+    archetype: meta.archetype,
+    instrument: patch.blocks.amp?.modelId ?? 'unknown',
+    createdAt,
+  };
+  const toneId = (await db.tones.add(tone as Tone)) as number;
+  const version: Omit<Version, 'id'> = {
+    toneId,
+    qrString,
+    patchJson: JSON.stringify(patch),
+    meta: JSON.stringify(meta),
+    createdAt,
+  };
+  const versionId = (await db.versions.add(version as Version)) as number;
+  return {
+    tone: { ...tone, id: toneId },
+    version: { ...version, id: versionId },
+  };
+}
+
+export async function listSessions(): Promise<Session[]> {
+  return db.sessions.orderBy('createdAt').reverse().toArray();
+}
+
+export async function listTones(sessionId: number): Promise<Tone[]> {
+  return db.tones.where('sessionId').equals(sessionId).sortBy('createdAt');
+}
+
+export async function getLatestVersion(toneId: number): Promise<Version | undefined> {
+  return db.versions.where('toneId').equals(toneId).last();
+}
