@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { describePatch } from '../codec/describe.ts';
+import type { BlockKind } from '../contracts/blocks.ts';
 import type { Patch } from '../contracts/patch.ts';
 import type { ToneMeta } from '../engine/index.ts';
-import { generateTone } from '../engine/index.ts';
 import { encodePreset } from '../codec/preset.ts';
 import { buildQrString } from '../codec/qr-string.ts';
 import { createSession, saveTone } from '../store/db.ts';
+import { generateToneAsync } from '../services/generateTone.ts';
 import { QrView } from '../ui/components/QrView.tsx';
 import { VersionTimeline } from '../ui/components/VersionTimeline.tsx';
+import { LockControls } from '../ui/components/LockControls.tsx';
+import { DelayHelper } from '../ui/components/DelayHelper.tsx';
+import { VariantCarousel } from '../ui/components/VariantCarousel.tsx';
 
 const INSTRUMENTS = [
   { id: 'electric-single-coil', label: 'Single Coil' },
@@ -24,12 +28,17 @@ type InstrumentId = (typeof INSTRUMENTS)[number]['id'];
 interface ToneCard {
   id: string;
   toneId: number;
+  versionId: number;
   qrString: string;
   patch: Patch;
   meta: ToneMeta;
 }
 
-export function SessionChat() {
+interface SessionChatProps {
+  onGoToIrLab?: () => void;
+}
+
+export function SessionChat({ onGoToIrLab }: SessionChatProps = {}) {
   const [messages, setMessages] = useState<ToneCard[]>([]);
   const [input, setInput] = useState('');
   const defaultInstrument = (localStorage.getItem('default-instrument') as InstrumentId | null) ?? 'electric-single-coil';
@@ -37,7 +46,10 @@ export function SessionChat() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+  const [locked, setLocked] = useState<BlockKind[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const latestCard = messages.length > 0 ? messages[messages.length - 1]! : null;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -50,32 +62,21 @@ export function SessionChat() {
     setLoading(true);
     setTimeout(async () => {
       try {
-        // Ensure session exists before saving tone
         let sid = sessionId;
+        const { patch, meta } = await generateToneAsync(prompt, instrument, locked);
         if (sid === null) {
-          const { patch: tempPatch, meta: tempMeta } = generateTone(prompt, instrument);
-          const name = `${tempMeta.archetype} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+          const name = `${meta.archetype} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
           const session = await createSession(name);
           sid = session.id!;
           setSessionId(sid);
-          // Now save the tone with the real sessionId
-          const preset = encodePreset(tempPatch);
-          const qrString = buildQrString(preset);
-          const { tone } = await saveTone(sid, tempPatch, tempMeta);
-          setMessages((prev) => [
-            ...prev,
-            { id: crypto.randomUUID(), toneId: tone.id!, qrString, patch: tempPatch, meta: tempMeta },
-          ]);
-        } else {
-          const { patch, meta } = generateTone(prompt, instrument);
-          const preset = encodePreset(patch);
-          const qrString = buildQrString(preset);
-          const { tone } = await saveTone(sid, patch, meta);
-          setMessages((prev) => [
-            ...prev,
-            { id: crypto.randomUUID(), toneId: tone.id!, qrString, patch, meta },
-          ]);
         }
+        const preset = encodePreset(patch);
+        const qrString = buildQrString(preset);
+        const { tone, version } = await saveTone(sid, patch, meta);
+        setMessages((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), toneId: tone.id!, versionId: version.id!, qrString, patch, meta },
+        ]);
       } catch (err) {
         console.error('generateAndSave failed', err);
       } finally {
@@ -92,18 +93,71 @@ export function SessionChat() {
   }
 
   function handleRestore(qrString: string) {
-    // Re-queue the restored QR as a new card by setting input — or just show it
-    // For v1: add it as a new card in the timeline
     setMessages((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
-        toneId: -1, // restored version, no new DB row
+        toneId: -1,
+        versionId: -1,
         qrString,
         patch: {} as Patch,
         meta: { archetype: 'Restored' } as ToneMeta,
       },
     ]);
+  }
+
+  async function handleSaveVariant(patch: Patch, qrString: string, _parentToneId: number) {
+    if (!sessionId) return;
+    try {
+      const meta: ToneMeta = {
+        archetype: latestCard?.meta.archetype ?? 'variant',
+        ruleTrace: [],
+        confidence: 0,
+        unknownTerms: [],
+      };
+      const { tone, version } = await saveTone(sessionId, patch, meta);
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), toneId: tone.id!, versionId: version.id!, qrString, patch, meta },
+      ]);
+    } catch (err) {
+      console.error('saveVariant failed', err);
+    }
+  }
+
+  async function handleApplyDelay(delayByte: number, modelId: string) {
+    if (!latestCard || !latestCard.patch?.blocks) return;
+    const patch = latestCard.patch;
+    // Update the dly time param byte value
+    const dlyBlock = patch.blocks.dly;
+    if (!dlyBlock) return;
+    // Find the time/rate param (first tempo param)
+    const updatedParams = { ...dlyBlock.params };
+    // Apply to 'time' if it exists, else 'rate'
+    const timeKey = 'time' in updatedParams ? 'time' : 'rate' in updatedParams ? 'rate' : null;
+    if (!timeKey) return;
+    updatedParams[timeKey] = delayByte;
+
+    const updatedPatch: Patch = {
+      ...patch,
+      blocks: {
+        ...patch.blocks,
+        dly: { ...dlyBlock, modelId, params: updatedParams },
+      },
+    };
+
+    if (!sessionId) return;
+    try {
+      const { tone, version } = await saveTone(sessionId, updatedPatch, latestCard.meta);
+      const preset = encodePreset(updatedPatch);
+      const qrString = buildQrString(preset);
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), toneId: tone.id!, versionId: version.id!, qrString, patch: updatedPatch, meta: latestCard.meta },
+      ]);
+    } catch (err) {
+      console.error('applyDelay failed', err);
+    }
   }
 
   return (
@@ -144,6 +198,27 @@ export function SessionChat() {
                   <p className="text-zinc-600 text-xs mt-1">{isExpanded ? '▲ Hide history' : '▼ Version history'}</p>
                 </div>
               </button>
+              {/* Variant carousel */}
+              {card.patch?.blocks && card.toneId > 0 && (
+                <div className="px-4">
+                  <p className="text-zinc-600 text-xs mb-1">Variants — tap to save</p>
+                  <VariantCarousel
+                    patch={card.patch}
+                    toneId={card.toneId}
+                    onSaveVariant={(p, q) => void handleSaveVariant(p, q, card.toneId)}
+                  />
+                </div>
+              )}
+              {/* Acoustic IR banner */}
+              {card.meta.archetype?.toLowerCase().includes('acoustic') && onGoToIrLab && (
+                <button
+                  type="button"
+                  onClick={onGoToIrLab}
+                  className="w-full text-left bg-amber-900/40 border border-amber-700/60 rounded-xl px-4 py-2.5 text-xs text-amber-300"
+                >
+                  🎙 This tone uses a user IR slot. <span className="underline">Tap to manage IR slots.</span>
+                </button>
+              )}
               {isExpanded && card.toneId > 0 && (
                 <div className="ml-4">
                   <VersionTimeline toneId={card.toneId} onRestore={handleRestore} />
@@ -160,6 +235,15 @@ export function SessionChat() {
         )}
         <div ref={bottomRef} />
       </div>
+
+      {/* Lock controls */}
+      <LockControls locked={locked} onChange={setLocked} />
+
+      {/* Delay Helper */}
+      <DelayHelper
+        latestPatch={latestCard?.patch ?? null}
+        onApply={(byte, modelId) => void handleApplyDelay(byte, modelId)}
+      />
 
       {/* Instrument chips */}
       <div className="flex gap-2 px-4 py-2 overflow-x-auto border-t border-zinc-800 bg-zinc-950">
