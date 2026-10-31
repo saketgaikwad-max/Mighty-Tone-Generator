@@ -145,11 +145,13 @@ function confidenceOf(kb: EngineKnowledge, intent: Intent, ctx: Ctx): number {
 /**
  * Intent -> Patch. Order: archetype models/chain + priors, vocabulary deltas and target bands, instrument
  * corrections, expert rules; then the result is encoded over the archetype's real-fixture template.
+ * @param locks Block kinds whose existing params should be preserved (not overwritten by deltas/targets/rules).
  */
 export function solve(
   intent: Intent,
   device: DeviceKnowledge = defaultDevice,
   kb: EngineKnowledge = engineKnowledge,
+  locks: BlockKind[] = [],
 ): SolveResult {
   const archetypeId = kb.archetypes.archetypes[intent.archetype] ? intent.archetype : kb.archetypes.default;
   const arch: Archetype = kb.archetypes.archetypes[archetypeId]!;
@@ -179,16 +181,28 @@ export function solve(
   }
   for (const [k, v] of Object.entries(arch.paramPriors)) write(ctx, k, v);
 
-  for (const [b, on] of Object.entries(intent.blocks ?? {})) ctx.blocks[b as BlockKind].enabled = on;
-  for (const [k, d] of Object.entries(intent.deltas)) write(ctx, k, (cur) => cur + d);
+  const lockedSet = new Set(locks);
+
+  for (const [b, on] of Object.entries(intent.blocks ?? {})) {
+    if (!lockedSet.has(b as BlockKind)) ctx.blocks[b as BlockKind].enabled = on;
+  }
+  for (const [k, d] of Object.entries(intent.deltas)) {
+    if (!lockedSet.has(blockOf(k as ParamKey) as BlockKind)) write(ctx, k as ParamKey, (cur) => cur + d);
+  }
   for (const [k, [lo, hi]] of Object.entries(intent.targets ?? {})) {
-    write(ctx, k, (cur) => Math.min(hi, Math.max(lo, cur)));
+    if (!lockedSet.has(blockOf(k as ParamKey) as BlockKind)) {
+      write(ctx, k as ParamKey, (cur) => Math.min(hi, Math.max(lo, cur)));
+    }
   }
 
   if (profile) {
     for (const g of groups) {
-      for (const b of g.enable ?? []) ctx.blocks[b].enabled = true;
-      for (const [k, d] of Object.entries(g.deltas ?? {})) write(ctx, k, (cur) => cur + d);
+      for (const b of g.enable ?? []) {
+        if (!lockedSet.has(b)) ctx.blocks[b].enabled = true;
+      }
+      for (const [k, d] of Object.entries(g.deltas ?? {})) {
+        if (!lockedSet.has(blockOf(k as ParamKey) as BlockKind)) write(ctx, k as ParamKey, (cur) => cur + d);
+      }
     }
     ruleTrace.push(`INST:${intent.instrument}`);
   }

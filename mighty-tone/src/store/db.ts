@@ -31,10 +31,21 @@ export interface Version {
   createdAt: number;
 }
 
+/** An IR impulse response assigned to a NUX Mighty Space user slot (slots 35-54). */
+export interface IrSlot {
+  id?: number;
+  /** 1-20, maps to device IR slots 35-54 */
+  slotNumber: number;
+  name: string;
+  notes?: string;
+  loadedAt: number;
+}
+
 class MightyToneDb extends Dexie {
   sessions!: EntityTable<Session, 'id'>;
   tones!: EntityTable<Tone, 'id'>;
   versions!: EntityTable<Version, 'id'>;
+  irSlots!: EntityTable<IrSlot, 'id'>;
 
   constructor() {
     super('MightyToneDb');
@@ -47,6 +58,12 @@ class MightyToneDb extends Dexie {
       sessions: '++id, createdAt, name',
       tones: '++id, sessionId, createdAt, archetype, instrument',
       versions: '++id, toneId, parentVersionId, createdAt, qrString, patchJson, meta',
+    });
+    this.version(3).stores({
+      sessions: '++id, createdAt, name',
+      tones: '++id, sessionId, createdAt, archetype, instrument',
+      versions: '++id, toneId, parentVersionId, createdAt, qrString, patchJson, meta',
+      irSlots: '++id, slotNumber, name, loadedAt',
     });
   }
 }
@@ -102,4 +119,24 @@ export async function getLatestVersion(toneId: number): Promise<Version | undefi
 
 export async function listVersions(toneId: number): Promise<Version[]> {
   return db.versions.where('toneId').equals(toneId).sortBy('createdAt');
+}
+
+export async function saveIrSlot(slotNumber: number, name: string, notes?: string): Promise<IrSlot> {
+  const loadedAt = Date.now();
+  // Replace existing slot with same number if present
+  const existing = await db.irSlots.where('slotNumber').equals(slotNumber).first();
+  if (existing?.id != null) {
+    await db.irSlots.update(existing.id, { name, notes, loadedAt });
+    return { ...existing, name, notes, loadedAt };
+  }
+  const id = await db.irSlots.add({ slotNumber, name, notes, loadedAt } as IrSlot);
+  return { id: id as number, slotNumber, name, notes, loadedAt };
+}
+
+export async function listIrSlots(): Promise<IrSlot[]> {
+  return db.irSlots.orderBy('slotNumber').toArray();
+}
+
+export async function deleteIrSlot(id: number): Promise<void> {
+  await db.irSlots.delete(id);
 }
