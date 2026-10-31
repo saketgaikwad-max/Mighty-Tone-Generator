@@ -24,6 +24,7 @@ export interface Tone {
 export interface Version {
   id?: number;
   toneId: number;
+  parentVersionId?: number;
   qrString: string;
   patchJson: string;
   meta: string;
@@ -41,6 +42,11 @@ class MightyToneDb extends Dexie {
       sessions: '++id, createdAt, name',
       tones: '++id, sessionId, createdAt, archetype, instrument',
       versions: '++id, toneId, createdAt, qrString, patchJson, meta',
+    });
+    this.version(2).stores({
+      sessions: '++id, createdAt, name',
+      tones: '++id, sessionId, createdAt, archetype, instrument',
+      versions: '++id, toneId, parentVersionId, createdAt, qrString, patchJson, meta',
     });
   }
 }
@@ -92,4 +98,8 @@ export async function listTones(sessionId: number): Promise<Tone[]> {
 
 export async function getLatestVersion(toneId: number): Promise<Version | undefined> {
   return db.versions.where('toneId').equals(toneId).last();
+}
+
+export async function listVersions(toneId: number): Promise<Version[]> {
+  return db.versions.where('toneId').equals(toneId).sortBy('createdAt');
 }
