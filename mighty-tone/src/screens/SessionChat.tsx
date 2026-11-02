@@ -17,6 +17,59 @@ import { generateVariants } from '../engine/variants.ts';
 import { buildHandoffPrompt, parseHandoffResponse } from '../llm/handoff.ts';
 import { solve } from '../engine/solve.ts';
 
+// ── curated free IR suggestions ───────────────────────────────────────────────
+const IR_SUGGESTIONS: Record<string, { name: string; source: string; url: string; notes: string }[]> = {
+  acoustic: [
+    {
+      name: 'Dreadnought body IR (free pack)',
+      source: 'Choptones Free Pack',
+      url: 'https://www.choptones.com/free-ir',
+      notes: 'Best for strumming / fingerpicking on steel-string dreadnought bodies',
+    },
+    {
+      name: 'Martin D-28 acoustic sim',
+      source: 'OwnHammer Free Samples',
+      url: 'https://www.ownhammer.com/store/index.php?main_page=product_info&products_id=329',
+      notes: 'Warm, balanced; works well with piezo pickups',
+    },
+    {
+      name: 'Taylor 814ce body capture',
+      source: 'IR Impulse (free)',
+      url: 'https://impulse-response.com/free-ir/',
+      notes: 'Bright and detailed; good for fingerstyle',
+    },
+  ],
+  mandolin: [
+    {
+      name: 'F-style mandolin body IR',
+      source: 'Choptones Free Pack',
+      url: 'https://www.choptones.com/free-ir',
+      notes: 'Adds resonant body character to electric mandolin signal',
+    },
+  ],
+  default: [
+    {
+      name: 'Celestion F12-X200 (free sample)',
+      source: 'Celestion Plus',
+      url: 'https://celestionplus.com/product/celestion-f12-x200-impulse-responses/',
+      notes: 'Full-range speaker; great for acoustic sims via guitar cab',
+    },
+    {
+      name: 'Greenback 25W vintage IR',
+      source: 'OwnHammer Free',
+      url: 'https://www.ownhammer.com/store/index.php?main_page=product_info&products_id=329',
+      notes: 'Classic warm cab — works for any clean/acoustic tone',
+    },
+  ],
+};
+
+function irSuggestionsFor(archetype: string): typeof IR_SUGGESTIONS['acoustic'] {
+  const key = archetype.toLowerCase();
+  if (key.includes('acoustic') || key.includes('piezo')) return IR_SUGGESTIONS['acoustic']!;
+  if (key.includes('mandolin')) return IR_SUGGESTIONS['mandolin']!;
+  return IR_SUGGESTIONS['default']!;
+}
+
 // ── design tokens ─────────────────────────────────────────────────────────────
 const GLASS =
   'bg-[rgba(28,32,52,0.62)] backdrop-blur-xl border border-white/[0.08] rounded-[18px] shadow-[0_8px_24px_rgba(0,0,0,0.35)]';
@@ -300,6 +353,69 @@ function SignalChainStrip({ patch }: { patch: Patch }) {
   );
 }
 
+// ── IR suggestion card ────────────────────────────────────────────────────────
+function IrSuggestionCard({ archetype, onGoToIrLab }: { archetype: string; onGoToIrLab?: () => void }) {
+  const suggestions = irSuggestionsFor(archetype);
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-[14px] p-3"
+      style={{ background: 'rgba(124,108,255,0.08)', border: '1px solid rgba(124,108,255,0.25)' }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-[16px]">〰</span>
+        <p className="text-[#9A8CFF] text-[13px] font-semibold flex-1">This tone works best with a user IR</p>
+        <button
+          type="button"
+          onClick={() => setExpanded(e => !e)}
+          className="text-[#7C6CFF] text-[12px] font-medium"
+          style={{ minHeight: 32 }}
+        >
+          {expanded ? 'Hide' : 'See free IRs'}
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="flex flex-col gap-2 pt-1">
+          <p className="text-[#62677E] text-[11px]">Free IRs suited for this tone — tap to open, then prep in IR Lab:</p>
+          {suggestions.map((ir, i) => (
+            <div
+              key={i}
+              className="flex flex-col gap-1 rounded-[10px] p-3"
+              style={{ background: 'rgba(28,32,52,0.62)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <p className="text-[#F2F3F8] text-[13px] font-semibold">{ir.name}</p>
+              <p className="text-[#9AA0B8] text-[11px]">{ir.notes}</p>
+              <div className="flex gap-2 mt-1 flex-wrap">
+                <a
+                  href={ir.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-full text-[12px] font-semibold text-white"
+                  style={{ background: 'linear-gradient(135deg,#7C6CFF,#4F8BFF)', minHeight: 32, display: 'inline-flex', alignItems: 'center' }}
+                >
+                  ↗ {ir.source}
+                </a>
+                {onGoToIrLab && (
+                  <button
+                    type="button"
+                    onClick={onGoToIrLab}
+                    className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                    style={{ background: 'rgba(124,108,255,0.18)', border: '1px solid rgba(124,108,255,0.35)', color: '#9A8CFF', minHeight: 32 }}
+                  >
+                    Prep in IR Lab →
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── tone card (AI response) ───────────────────────────────────────────────────
 interface ToneCard {
   id: string;
@@ -322,6 +438,7 @@ interface ToneResponseCardProps {
   onRestore: (qrString: string) => void;
   locked: BlockKind[];
   onFeedbackSend: (prompt: string, newLocked: BlockKind[]) => void;
+  onGoToIrLab?: () => void;
 }
 
 function ToneResponseCard({
@@ -335,6 +452,7 @@ function ToneResponseCard({
   onRestore,
   locked,
   onFeedbackSend,
+  onGoToIrLab,
 }: ToneResponseCardProps) {
   const [editingName, setEditingName] = useState(false);
   const [toneName, setToneName] = useState(card.meta.archetype ?? 'Tone');
@@ -476,10 +594,15 @@ function ToneResponseCard({
         <button
           type="button"
           onClick={() => setShowDelay(d => !d)}
-          className="px-3 py-2 rounded-full bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#9AA0B8] text-[13px] font-medium"
+          className={`px-3 py-2 rounded-full text-[13px] font-medium transition-all ${
+            desc?.blocks.dly?.enabled
+              ? 'bg-[rgba(124,108,255,0.18)] border border-[#7C6CFF]/40 text-[#9A8CFF]'
+              : 'bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#9AA0B8]'
+          }`}
           style={{ minHeight: 40 }}
+          title={desc?.blocks.dly?.enabled ? 'This tone has an active delay — tap to dial in BPM' : 'Open delay helper'}
         >
-          ⏱ Delay helper
+          ⏱ {desc?.blocks.dly?.enabled ? `Delay · ${desc.blocks.dly.params['Time'] ?? desc.blocks.dly.params['Rate'] ?? '—'}` : 'Delay helper'}
         </button>
       </div>
 
@@ -535,11 +658,11 @@ function ToneResponseCard({
         </div>
       )}
 
-      {/* Acoustic IR banner */}
-      {card.meta.archetype?.toLowerCase().includes('acoustic') && (
-        <div className="text-[12px] text-amber-300 bg-amber-900/30 border border-amber-700/40 rounded-[12px] px-3 py-2">
-          🎙 This tone uses a user IR slot.
-        </div>
+      {/* IR suggestion card — shown for acoustic/mandolin/IR tones */}
+      {(card.meta.archetype?.toLowerCase().includes('acoustic') ||
+        card.meta.archetype?.toLowerCase().includes('mandolin') ||
+        card.meta.ruleTrace?.some(r => r.includes('IR') || r.includes('user-ir'))) && (
+        <IrSuggestionCard archetype={card.meta.archetype ?? ''} onGoToIrLab={onGoToIrLab} />
       )}
     </div>
   );
@@ -790,6 +913,7 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
                 onRestore={qr => void handleRestore(qr)}
                 locked={locked}
                 onFeedbackSend={handleFeedbackSend}
+                onGoToIrLab={_onGoToIrLab}
               />
             </div>
           );
@@ -850,11 +974,27 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
           rows={1}
           placeholder="Describe a tone… (hold 🎙 to dictate)"
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={e => {
+            setInput(e.target.value);
+            // auto-grow
+            const el = e.target;
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+          }}
+          onFocus={e => {
+            // expand to at least 3 rows on focus
+            const el = e.target;
+            el.style.height = 'auto';
+            el.style.height = Math.max(el.scrollHeight, 88) + 'px';
+          }}
+          onBlur={e => {
+            // collapse back if empty
+            if (!input.trim()) e.target.style.height = '44px';
+          }}
           onKeyDown={handleKeyDown}
-          className="flex-1 bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#F2F3F8] rounded-[12px] px-4 py-3 text-[15px] outline-none placeholder:text-[#62677E] resize-none"
+          className="flex-1 bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#F2F3F8] rounded-[16px] px-4 py-3 text-[15px] outline-none placeholder:text-[#62677E] resize-none transition-all focus:border-[#7C6CFF]/40 focus:shadow-[0_0_0_2px_rgba(124,108,255,0.15)]"
           disabled={loading}
-          style={{ minHeight: 44, maxHeight: 120 }}
+          style={{ minHeight: 44, maxHeight: 160 }}
         />
         {toneCards.length > 0 && geminiKeyMissing && (
           <button
