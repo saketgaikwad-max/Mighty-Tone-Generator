@@ -7,7 +7,8 @@ import type { Patch } from '../contracts/patch.ts';
 import type { ToneMeta } from '../engine/index.ts';
 import { encodePreset, decodePreset } from '../codec/preset.ts';
 import { buildQrString, parseQrString } from '../codec/qr-string.ts';
-import { createSession, saveTone, loadSessionHistory } from '../store/db.ts';
+import { createSession, saveTone, loadSessionHistory, listIrSlots } from '../store/db.ts';
+import type { IrSlot } from '../store/db.ts';
 import { generateToneAsync } from '../services/generateTone.ts';
 import { QrView } from '../ui/components/QrView.tsx';
 import { VersionTimeline } from '../ui/components/VersionTimeline.tsx';
@@ -693,6 +694,9 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
   const [locked, setLocked] = useState<BlockKind[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showHandoff, setShowHandoff] = useState(false);
+  const [activeIrSlot, setActiveIrSlot] = useState<IrSlot | null>(null);
+  const [showIrPicker, setShowIrPicker] = useState(false);
+  const [savedIrSlots, setSavedIrSlots] = useState<IrSlot[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const geminiKeyMissing = !localStorage.getItem('gemini-key');
 
@@ -742,7 +746,7 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
     setTimeout(async () => {
       try {
         let sid = sessionId;
-        const { patch, meta } = await generateToneAsync(prompt, instrument, locked);
+        const { patch, meta } = await generateToneAsync(prompt, instrument, locked, activeIrSlot?.slotNumber);
         if (sid === null) {
           const name = `${meta.archetype} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
           const session = await createSession(name);
@@ -1003,6 +1007,16 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
         ))}
       </div>
 
+      {/* IR slot chip — shown when a slot is active */}
+      {activeIrSlot && (
+        <div className="px-3 pb-1 flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[rgba(124,108,255,0.15)] border border-[#7C6CFF]/30 text-[#9A8CFF] text-[13px]">
+            <span>📦 Slot {activeIrSlot.slotNumber} · {activeIrSlot.name}</span>
+            <button type="button" onClick={() => setActiveIrSlot(null)} className="text-[#62677E] hover:text-[#F87171] ml-1">✕</button>
+          </div>
+        </div>
+      )}
+
       {/* Composer bar */}
       <div className="border-t border-white/[0.08] bg-[#141826] p-3 flex items-end gap-2">
         <textarea
@@ -1043,6 +1057,21 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
         )}
         <button
           type="button"
+          title="Use a prepped IR slot"
+          onClick={() => {
+            listIrSlots().then(slots => { setSavedIrSlots(slots); setShowIrPicker(true); }).catch(console.error);
+          }}
+          className={`shrink-0 px-3 py-2 rounded-full text-[13px] font-medium transition-all ${
+            activeIrSlot
+              ? 'bg-[rgba(124,108,255,0.18)] border border-[#7C6CFF]/40 text-[#9A8CFF]'
+              : 'bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#9AA0B8]'
+          }`}
+          style={{ minHeight: 44 }}
+        >
+          📦
+        </button>
+        <button
+          type="button"
           onClick={() => void handleSend()}
           disabled={loading || !input.trim()}
           className={`${GRADIENT_BTN} px-4 py-3 text-[15px] disabled:opacity-40`}
@@ -1051,6 +1080,51 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
           ↑
         </button>
       </div>
+
+      {/* IR slot picker sheet */}
+      {showIrPicker && createPortal(
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.55)' }} onClick={() => setShowIrPicker(false)}>
+          <div className={`${GLASS} w-full max-w-[480px] p-5 pb-10 rounded-t-[24px]`} onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <h3 className="text-[#F2F3F8] font-bold text-[17px] mb-1">Use prepped IR slot</h3>
+            <p className="text-[#9AA0B8] text-[13px] mb-4">Select a slot — the next tone generation will pin the cab block to your IR and adjust EQ to match.</p>
+            {savedIrSlots.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-[#62677E] text-[14px]">No IR slots prepped yet.</p>
+                <p className="text-[#62677E] text-[12px] mt-1">Go to IR Lab → Prep tool to load an IR into a slot first.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+                {savedIrSlots.map(slot => (
+                  <button
+                    key={slot.id}
+                    type="button"
+                    onClick={() => { setActiveIrSlot(slot); setShowIrPicker(false); }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-[14px] border text-left transition-all ${
+                      activeIrSlot?.slotNumber === slot.slotNumber
+                        ? 'bg-[rgba(124,108,255,0.18)] border-[#7C6CFF]/40'
+                        : 'bg-[rgba(28,32,52,0.4)] border-white/[0.06] hover:border-[#7C6CFF]/20'
+                    }`}
+                  >
+                    <span className="text-[#7C6CFF] font-mono text-[13px] shrink-0 w-12">Slot {slot.slotNumber}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[#F2F3F8] text-[14px] font-medium truncate">{slot.name}</p>
+                      {slot.notes && <p className="text-[#9AA0B8] text-[12px] truncate">{slot.notes}</p>}
+                    </div>
+                    {activeIrSlot?.slotNumber === slot.slotNumber && <span className="text-[#34D399] text-sm">✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+            {activeIrSlot && (
+              <button type="button" onClick={() => { setActiveIrSlot(null); setShowIrPicker(false); }} className="mt-4 w-full py-2 rounded-full bg-[rgba(248,113,113,0.12)] border border-[#F87171]/30 text-[#F87171] text-[14px]">
+                Remove IR — use built-in cab
+              </button>
+            )}
+          </div>
+        </div>,
+        document.body,
+      )}
 
       {/* Handoff sheet */}
       {showHandoff && (
