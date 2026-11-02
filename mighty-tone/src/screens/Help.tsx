@@ -301,7 +301,7 @@ export function Help() {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto scrollbar-none px-4 pb-8">
         {/* Header */}
-        <div className="pt-12 pb-6">
+        <div className="pt-safe pb-6">
           <h1 className="text-[34px] font-bold leading-tight" style={{ color: '#F2F3F8' }}>
             Guide
           </h1>

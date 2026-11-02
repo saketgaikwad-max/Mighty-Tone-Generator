@@ -61,3 +61,8 @@ html {
 .tab-bar-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Safe top padding — uses notch height on iPhone, 16px elsewhere */
+.pt-safe {
+  padding-top: max(16px, env(safe-area-inset-top));
+}

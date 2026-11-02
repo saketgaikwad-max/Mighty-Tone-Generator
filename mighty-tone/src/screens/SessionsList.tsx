@@ -273,7 +273,7 @@ export function SessionsList({ onSelectSession, onNewSession }: SessionsListProp
   return (
     <div className="flex flex-col h-full bg-[#0B0D14]">
       {/* Header */}
-      <div className="px-4 pt-12 pb-2">
+      <div className="px-4 pt-safe pb-2">
         <h1 className="text-[#F2F3F8] font-bold text-[34px] leading-[41px]">Sessions</h1>
       </div>
 
