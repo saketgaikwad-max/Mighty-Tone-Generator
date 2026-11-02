@@ -47,10 +47,26 @@ export function App() {
   }
 
   return (
-    /* Outer wrapper — centres content on desktop, dark bg on sides */
+    /*
+     * Outer wrapper:
+     *   phone  (<640)  – full-width, dark bg (same colour as shell so no visible band)
+     *   tablet (640–1023) – centres at max-w-[600px], bg shows on sides
+     *   desktop (≥1024)   – centres at max-w-[480px], bg shows on sides
+     */
     <div className="min-h-screen bg-[#05060a] flex justify-center">
-      {/* Inner app shell — phone width on desktop, full width on mobile */}
-      <div className="w-full max-w-[430px] h-screen h-[100dvh] flex flex-col bg-[#0B0D14] relative overflow-hidden">
+      {/*
+       * Inner app shell:
+       *   phone  – w-full (no max-w cap)
+       *   tablet – max-w-[600px]
+       *   desktop – max-w-[480px] + hairline side borders
+       */}
+      <div className="
+        w-full
+        sm:max-w-[600px]
+        lg:max-w-[480px]
+        lg:border-x lg:border-white/[0.04]
+        h-screen h-[100dvh] flex flex-col bg-[#0B0D14] relative overflow-hidden
+      ">
         {/* Screen content */}
         <div className="flex-1 overflow-hidden relative">
           {activeTab === 'sessions' && sessionsView === 'list' && (
@@ -99,7 +115,7 @@ export function App() {
             borderTop: '1px solid rgba(255,255,255,0.08)',
           }}
         >
-          <div className="flex h-[64px] md:h-[52px]">
+          <div className="flex h-[64px] sm:h-[52px]">
             {TABS.map(({ id, label, Icon }) => {
               const active = activeTab === id;
               return (
@@ -120,7 +136,7 @@ export function App() {
                   )}
                   <Icon size={22} color={active ? '#7C6CFF' : '#62677E'} />
                   <span
-                    className="text-[10px] md:text-[11px] font-medium leading-none"
+                    className="text-[10px] sm:text-[11px] font-medium leading-none"
                     style={{ color: active ? '#7C6CFF' : '#62677E' }}
                   >
                     {label}
