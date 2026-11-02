@@ -1,10 +1,12 @@
 import type { BlockKind } from '../contracts/blocks.ts';
+import { BLOCK_KINDS } from '../contracts/blocks.ts';
 import type { Patch } from '../contracts/patch.ts';
 import { generateTone, solve, refinePatch, type ToneMeta } from '../engine/index.ts';
 import { encodePreset } from '../codec/preset.ts';
 import { buildQrString } from '../codec/qr-string.ts';
 import { saveTone } from '../store/db.ts';
 import { callGemini } from '../llm/gemini.ts';
+import { modelById } from '../knowledge/device.ts';
 
 function applyUserIrSlot(patch: Patch, slotNumber: number): Patch {
   const cabModelId = `cab.user-ir-${slotNumber}`;
@@ -71,6 +73,20 @@ export async function generateToneAsync(
   return result;
 }
 
+function describePatchCompact(patch: Patch): string {
+  const lines: string[] = [];
+  for (const bk of BLOCK_KINDS) {
+    const state = patch.blocks[bk];
+    if (!state) continue;
+    const model = modelById(state.modelId);
+    const status = state.enabled ? 'ON' : 'OFF';
+    const params = Object.entries(state.params).map(([k, v]) => `${k}=${v}`).join(' ');
+    lines.push(`${bk}[${status}]: ${model?.name ?? state.modelId} — ${params}`);
+  }
+  lines.push(`master=${patch.master}`);
+  return lines.join('\n');
+}
+
 export async function refineToneAsync(
   basePatch: Patch,
   feedbackPrompt: string,
@@ -80,10 +96,11 @@ export async function refineToneAsync(
 ): Promise<{ patch: Patch; meta: ToneMeta }> {
   const apiKey = localStorage.getItem('gemini-key');
   let intent;
+  const patchContext = describePatchCompact(basePatch);
 
   if (apiKey) {
     try {
-      const result = await callGemini(feedbackPrompt, instrument);
+      const result = await callGemini(feedbackPrompt, instrument, { currentPatch: patchContext });
       intent = result.intent;
     } catch {
       const { parse } = await import('../engine/parse.ts');
