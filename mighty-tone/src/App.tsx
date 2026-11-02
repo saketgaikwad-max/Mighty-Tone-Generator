@@ -47,23 +47,12 @@ export function App() {
   }
 
   return (
-    /*
-     * Outer wrapper:
-     *   phone  (<640)  – full-width, dark bg (same colour as shell so no visible band)
-     *   tablet (640–1023) – centres at max-w-[640px], bg shows on sides
-     *   desktop (≥1024)   – centres at max-w-[820px], bg shows on sides
-     */
     <div className="min-h-screen bg-[#05060a] flex justify-center">
-      {/*
-       * Inner app shell:
-       *   phone  – w-full (no max-w cap)
-       *   tablet – max-w-[640px]
-       *   desktop – max-w-[820px] + hairline side borders
-       */}
       <div className="
         w-full
-        sm:max-w-[640px]
-        lg:max-w-[820px]
+        sm:max-w-[700px]
+        lg:max-w-[960px]
+        xl:max-w-[1080px]
         lg:border-x lg:border-white/[0.04]
         h-screen h-[100dvh] flex flex-col bg-[#0B0D14] relative overflow-hidden
       ">

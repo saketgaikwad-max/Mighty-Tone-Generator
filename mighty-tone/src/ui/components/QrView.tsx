@@ -1,5 +1,6 @@
 import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface QrViewProps {
   qrString: string;
@@ -13,11 +14,11 @@ export function QrView({ qrString, size = 180 }: QrViewProps) {
   useEffect(() => {
     if (!canvasRef.current) return;
     QRCode.toCanvas(canvasRef.current, qrString, {
-      width: fullscreen ? Math.min(window.innerWidth - 48, 320) : size,
+      width: size,
       margin: 1,
       color: { dark: '#000000', light: '#ffffff' },
     }).catch(console.error);
-  }, [qrString, size, fullscreen]);
+  }, [qrString, size]);
 
   return (
     <>
@@ -27,33 +28,31 @@ export function QrView({ qrString, size = 180 }: QrViewProps) {
         className="cursor-pointer rounded"
         style={{ width: size, height: size }}
       />
-      {fullscreen && (
+      {fullscreen && createPortal(
         <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm"
           onClick={() => setFullscreen(false)}
         >
-          <canvas
-            ref={undefined}
-            id="qr-fullscreen"
-            className="rounded-xl"
-          />
-          {/* Re-render large QR in fullscreen overlay */}
-          <FullscreenQr qrString={qrString} onClose={() => setFullscreen(false)} />
-        </div>
+          <div className="flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
+            <FullscreenQr qrString={qrString} />
+            <p className="text-white/60 text-[13px]">Tap outside to close</p>
+          </div>
+        </div>,
+        document.body,
       )}
     </>
   );
 }
 
-function FullscreenQr({ qrString, onClose }: { qrString: string; onClose: () => void }) {
+function FullscreenQr({ qrString }: { qrString: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fsSize = Math.min(window.innerWidth - 48, 320);
+  const fsSize = Math.min(window.innerWidth - 64, window.innerHeight - 160, 480);
 
   useEffect(() => {
     if (!canvasRef.current) return;
     QRCode.toCanvas(canvasRef.current, qrString, {
       width: fsSize,
-      margin: 2,
+      margin: 3,
       color: { dark: '#000000', light: '#ffffff' },
     }).catch(console.error);
   }, [qrString, fsSize]);
@@ -61,8 +60,8 @@ function FullscreenQr({ qrString, onClose }: { qrString: string; onClose: () => 
   return (
     <canvas
       ref={canvasRef}
-      onClick={onClose}
-      className="rounded-xl cursor-pointer"
+      className="rounded-2xl shadow-[0_0_60px_rgba(124,108,255,0.3)]"
+      style={{ width: fsSize, height: fsSize }}
     />
   );
 }
