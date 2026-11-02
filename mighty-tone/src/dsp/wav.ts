@@ -95,3 +95,34 @@ export function toMono(samples: Float32Array, channels: number): Float32Array {
   }
   return out;
 }
+
+/**
+ * Encode a mono Float32Array as a 32-bit float WAV (IEEE_FLOAT, 1 ch).
+ * NUX Mighty Space accepts 44100 / 48000 Hz, mono, 32-bit float WAV.
+ */
+export function encodeWavFloat32(samples: Float32Array, sampleRate = 48000): ArrayBuffer {
+  const numSamples = samples.length;
+  const bytesPerSample = 4; // 32-bit float
+  const dataSize = numSamples * bytesPerSample;
+  const buf = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buf);
+  const write4cc = (off: number, s: string) => {
+    for (let i = 0; i < 4; i++) view.setUint8(off + i, s.charCodeAt(i));
+  };
+  write4cc(0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  write4cc(8, 'WAVE');
+  write4cc(12, 'fmt ');
+  view.setUint32(16, 16, true);          // chunk size
+  view.setUint16(20, 3, true);           // FORMAT_FLOAT = 3
+  view.setUint16(22, 1, true);           // channels = 1
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * bytesPerSample, true); // byte rate
+  view.setUint16(32, bytesPerSample, true);              // block align
+  view.setUint16(34, 32, true);          // bits per sample
+  write4cc(36, 'data');
+  view.setUint32(40, dataSize, true);
+  const f32 = new Float32Array(buf, 44, numSamples);
+  f32.set(samples);
+  return buf;
+}

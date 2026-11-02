@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { saveIrSlot } from '../store/db.ts';
+import { encodeWavFloat32 } from '../dsp/wav.ts';
 
 export interface IrPrepResult {
   ir: Float32Array;
@@ -464,9 +465,42 @@ export function IRPrep({ onDone }: IRPrepProps) {
               />
             </div>
 
-            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-sm text-zinc-300">
-              💡 Load the prepared IR into MightyAmp slot {slotNumber + 34} manually, then scan the QR from your
-              acoustic tone.
+            {/* Download processed WAV */}
+            {result && (
+              <div className="bg-[rgba(124,108,255,0.08)] border border-[#7C6CFF]/30 rounded-xl p-4">
+                <p className="text-[#F2F3F8] text-[14px] font-semibold mb-1">⬇ Download processed IR</p>
+                <p className="text-[#9AA0B8] text-[12px] mb-3">
+                  Download the prepared WAV file and load it into your NUX Mighty Space via the NUX Mighty app (Impulse → User IRs → Slot {slotNumber}).
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const wav = encodeWavFloat32(result.ir, 48000);
+                    const blob = new Blob([wav], { type: 'audio/wav' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${(irName || `IR-slot-${slotNumber}`).replace(/\s+/g, '-')}.wav`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="w-full py-2.5 rounded-full bg-[rgba(124,108,255,0.18)] border border-[#7C6CFF]/40 text-[#9A8CFF] text-[14px] font-semibold"
+                  style={{ minHeight: 44 }}
+                >
+                  ⬇ Download {(irName || `IR-slot-${slotNumber}`).replace(/\s+/g, '-')}.wav
+                </button>
+              </div>
+            )}
+
+            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-sm text-zinc-300 space-y-2">
+              <p className="font-semibold text-[#F2F3F8]">How to load into the amp:</p>
+              <ol className="list-decimal list-inside space-y-1 text-[#9AA0B8] text-[13px]">
+                <li>Download the WAV above</li>
+                <li>Open the <strong className="text-white">NUX Mighty app</strong> on your phone</li>
+                <li>Go to <strong className="text-white">Impulse Response → User IRs</strong></li>
+                <li>Tap slot <strong className="text-white">{slotNumber + 34}</strong> and import the WAV</li>
+                <li>Back here — tap "Save to inventory" so the app knows slot {slotNumber} is loaded</li>
+              </ol>
             </div>
 
             <div className="flex gap-3">
@@ -479,7 +513,7 @@ export function IRPrep({ onDone }: IRPrepProps) {
                 style={{ minHeight: 44 }}
                 className="flex-1 bg-gradient-to-br from-[#7C6CFF] to-[#4F8BFF] shadow-[0_0_24px_rgba(124,108,255,0.45)] disabled:opacity-40 text-white font-semibold rounded-full text-sm"
               >
-                {saving ? 'Saving…' : 'Save to inventory'}
+                {saving ? 'Saving…' : '✓ Save to inventory'}
               </button>
             </div>
           </div>
