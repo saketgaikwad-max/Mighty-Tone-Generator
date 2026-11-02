@@ -316,7 +316,7 @@ interface ToneResponseCardProps {
   sessionId: number | null;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  onSave: () => Promise<void>;
+  onSave: () => void;
   onSaveVariant: (patch: Patch, qrString: string) => Promise<void>;
   onApplyDelay: (byte: number, modelId: string) => Promise<void>;
   onRestore: (qrString: string) => void;
@@ -341,6 +341,7 @@ function ToneResponseCard({
   const [showVariants, setShowVariants] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showDelay, setShowDelay] = useState(false);
+  const [savedConfirmed, setSavedConfirmed] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   const desc = card.patch?.blocks ? describePatch(card.patch) : null;
@@ -420,11 +421,15 @@ function ToneResponseCard({
       <div className="flex gap-2 flex-wrap">
         <button
           type="button"
-          onClick={() => void onSave()}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#9AA0B8] text-[13px] font-medium"
+          onClick={() => { onSave(); setSavedConfirmed(true); }}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-full border text-[13px] font-medium transition-all ${
+            savedConfirmed
+              ? 'bg-[rgba(52,211,153,0.15)] border-[#34D399]/40 text-[#34D399]'
+              : 'bg-[rgba(28,32,52,0.62)] border-white/[0.08] text-[#9AA0B8]'
+          }`}
           style={{ minHeight: 36 }}
         >
-          ♡ <span>Save</span>
+          {savedConfirmed ? '♥ Saved' : '♡ Save'}
         </button>
         <button
           type="button"
@@ -707,13 +712,9 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
     }
   }
 
-  async function handleSaveTone(card: ToneCard) {
-    if (!sessionId) return;
-    try {
-      await saveTone(sessionId, card.patch, card.meta);
-    } catch (err) {
-      console.error('saveTone failed', err);
-    }
+  function handleSaveTone(_card: ToneCard) {
+    // Tone is already persisted when the card is created; this is a bookmark signal only.
+    // No-op – the UI button shows "Saved ✓" via local state.
   }
 
   async function handleApplyDelay(delayByte: number, modelId: string) {
@@ -783,7 +784,7 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
                 sessionId={sessionId}
                 isExpanded={expandedCardId === card.id}
                 onToggleExpand={() => setExpandedCardId(expandedCardId === card.id ? null : card.id)}
-                onSave={() => handleSaveTone(card)}
+                onSave={() => { handleSaveTone(card); }}
                 onSaveVariant={handleSaveVariant}
                 onApplyDelay={handleApplyDelay}
                 onRestore={qr => void handleRestore(qr)}
@@ -807,12 +808,6 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
       {settingsOpen && (
         <div className="border-t border-white/[0.08] bg-[#141826] px-4 py-3 flex flex-col gap-3">
           <LockControls locked={locked} onChange={setLocked} />
-          <DelayHelper
-            latestPatch={latestCard?.patch ?? null}
-            onApply={(byte, modelId) => void handleApplyDelay(byte, modelId)}
-            isOpen={settingsOpen}
-            onClose={() => setSettingsOpen(false)}
-          />
         </div>
       )}
 

@@ -63,9 +63,19 @@ export function IRInventory({ onPrepNew }: IRInventoryProps) {
     <div className="flex flex-col h-full overflow-y-auto" style={{ background: '#0B0D14', color: '#F2F3F8' }}>
       {/* Large title */}
       <div className="sticky top-0 z-10 px-4 pt-5 pb-3" style={{ background: '#0B0D14' }}>
-        <h1 style={{ fontSize: 34, fontWeight: 700, lineHeight: '41px', color: '#F2F3F8' }}>IR Lab</h1>
+        <div className="flex items-center justify-between">
+          <h1 style={{ fontSize: 34, fontWeight: 700, lineHeight: '41px', color: '#F2F3F8' }}>IR Lab</h1>
+          <button
+            type="button"
+            onClick={onPrepNew}
+            style={{ minHeight: 36 }}
+            className="text-sm font-semibold px-4 rounded-full bg-gradient-to-br from-[#7C6CFF] to-[#4F8BFF] text-white shadow-[0_0_16px_rgba(124,108,255,0.35)]"
+          >
+            Prep new IR
+          </button>
+        </div>
 
-        {/* Segmented control */}
+        {/* Segmented control - close extra div from header flex */}
         <div
           className="flex mt-3 rounded-[12px] p-1 gap-1"
           style={{ background: 'rgba(255,255,255,0.05)' }}

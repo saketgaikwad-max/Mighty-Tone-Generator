@@ -29,6 +29,21 @@ function archetypeColor(archetype: string): string {
 
 interface ToneWithQr extends Tone {
   qrString?: string;
+  confidence?: number;
+}
+
+function ConfidenceBadge({ value }: { value: number }) {
+  const level = value >= 0.7 ? 'High' : value >= 0.4 ? 'Medium' : 'Low';
+  const color = value >= 0.7 ? '#34D399' : value >= 0.4 ? '#FBBF24' : '#F87171';
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold w-fit"
+      style={{ background: `${color}22`, color }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: color }} />
+      {level}
+    </span>
+  );
 }
 
 interface BottomSheetProps {
@@ -103,7 +118,11 @@ export function Library() {
         const tones = await listTones(session.id!);
         for (const tone of tones) {
           const v = await getLatestVersion(tone.id!);
-          collected.push({ ...tone, qrString: v?.qrString });
+          let confidence: number | undefined;
+          if (v?.meta) {
+            try { confidence = (JSON.parse(v.meta) as { confidence?: number }).confidence; } catch { /* ignore */ }
+          }
+          collected.push({ ...tone, qrString: v?.qrString, confidence });
         }
       }
       setAllTones(collected);
@@ -122,7 +141,7 @@ export function Library() {
   ];
 
   // Apply search + filter
-  const afterFilter = applyToneFilter(allTones, activeFilter);
+  const afterFilter = applyToneFilter(allTones, activeFilter) as ToneWithQr[];
   const filtered = searchQuery.trim()
     ? afterFilter.filter((t) => {
         const q = searchQuery.toLowerCase();
@@ -254,6 +273,9 @@ export function Library() {
                 >
                   {tone.archetype}
                 </span>
+                {tone.confidence != null && (
+                  <ConfidenceBadge value={tone.confidence} />
+                )}
               </div>
             </button>
           ))}
