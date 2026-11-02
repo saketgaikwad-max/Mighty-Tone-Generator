@@ -12,17 +12,18 @@ interface IRPrepProps {
   onDone?: () => void;
 }
 
+// Vite ?worker import — bundled as a separate chunk automatically.
+import DspWorker from '../dsp/worker.ts?worker';
+const _dspWorkerFactory: (() => Worker) | null = () => new DspWorker();
+
 // Worker response protocol (matches src/dsp/worker.ts)
 type WorkerResponse =
   | { type: 'result'; result: IrPrepResult }
   | { type: 'error'; message: string };
 
 async function runPipeline(_buf: ArrayBuffer, _opts: PipelineOpts): Promise<IrPrepResult> {
-  // Try to load real worker; fall back to stub gracefully
-  try {
-    // Dynamic import so the module graph doesn't fail when the worker doesn't exist yet
-    const workerUrl = new URL('../dsp/worker.ts', import.meta.url);
-    const worker = new Worker(workerUrl, { type: 'module' });
+  if (_dspWorkerFactory) {
+    const worker = _dspWorkerFactory();
     return await new Promise<IrPrepResult>((resolve, reject) => {
       worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
         worker.terminate();
@@ -33,12 +34,10 @@ async function runPipeline(_buf: ArrayBuffer, _opts: PipelineOpts): Promise<IrPr
           reject(new Error(msg.message));
         }
       };
-      worker.onerror = (_err) => {
+      worker.onerror = (err) => {
         worker.terminate();
-        reject(new Error('Worker error'));
+        reject(new Error(String(err)));
       };
-      // Worker protocol: { type: 'prepare', wav: ArrayBuffer, options: Partial<IrPrepOptions> }
-      // Note: blend requires decoded Float32Array — omit for now (blend is optional)
       worker.postMessage(
         {
           type: 'prepare',
@@ -52,8 +51,9 @@ async function runPipeline(_buf: ArrayBuffer, _opts: PipelineOpts): Promise<IrPr
         [_buf],
       );
     });
-  } catch {
-    // DSP not yet available — return stub result
+  }
+  // Worker not available — return stub
+  {
     return {
       ir: new Float32Array(512).fill(0),
       log: ['DSP not yet available — using stub zero IR'],
