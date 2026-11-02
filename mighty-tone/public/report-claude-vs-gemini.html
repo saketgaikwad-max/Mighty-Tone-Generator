@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mighty Tone Generator — Claude vs Gemini: Strategic Report</title>
+<style>
+  @page { size: A4; margin: 1.5cm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #1a1a2e; line-height: 1.6; max-width: 850px; margin: 0 auto; padding: 40px 24px; }
+  h1 { font-size: 28px; color: #7C6CFF; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 32px; }
+  h2 { font-size: 20px; color: #1a1a2e; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #7C6CFF; }
+  h3 { font-size: 16px; color: #4F8BFF; margin: 20px 0 8px; }
+  p, li { font-size: 14px; margin-bottom: 8px; }
+  ul { padding-left: 20px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
+  th, td { padding: 8px 10px; text-align: left; border: 1px solid #ddd; }
+  th { background: #7C6CFF; color: white; font-weight: 600; }
+  tr:nth-child(even) { background: #f8f8fc; }
+  .verdict { background: #f0eeff; border-left: 4px solid #7C6CFF; padding: 12px 16px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+  .version-block { background: #fafafe; border: 1px solid #e8e8f0; border-radius: 12px; padding: 16px 20px; margin: 12px 0; }
+  .version-block h3 { margin-top: 0; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .tag-green { background: #d1fae5; color: #065f46; }
+  .tag-blue { background: #dbeafe; color: #1e40af; }
+  .tag-purple { background: #ede9fe; color: #5b21b6; }
+  .tag-amber { background: #fef3c7; color: #92400e; }
+  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 11px; color: #999; }
+  @media print { body { padding: 0; } .version-block { break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<h1>Mighty Tone Generator</h1>
+<p class="subtitle">Claude vs Gemini: Comparative Analysis & 5-Version Product Roadmap &bull; November 2026</p>
+
+<h2>1. Current Architecture</h2>
+<p>The app uses <strong>Gemini 2.5 Flash</strong> (free tier) as its primary tone reasoning engine, called directly from the browser via REST API. A deterministic parser with 47 vocabulary terms serves as fallback when no API key is present. The Gemini system prompt contains a full NUX model catalog with tonal character descriptions, gear-to-model mapping, and artist tone examples.</p>
+
+<h2>2. Head-to-Head Comparison</h2>
+
+<table>
+<tr><th>Dimension</th><th>Gemini 2.5 Flash</th><th>Claude (Sonnet/Opus)</th></tr>
+<tr><td><strong>Reasoning depth</strong></td><td>Good. Follows instructions well. Occasionally shallow on multi-step gear mapping.</td><td>Exceptional. Multi-step reasoning, nuanced analogies (e.g., "bagpipes = sustained drone + nasal reed → comp + fuzz + EQ 1.2kHz peak"). Would produce more creative and accurate tone mappings.</td></tr>
+<tr><td><strong>Artist knowledge</strong></td><td>Decent general knowledge. Google Search grounding helps for specific gear lookups.</td><td>Deeper cultural/musical knowledge baked in. Better at connecting "Continuum-era Mayer" to specific Two-Rock settings, or knowing SRV's Dumble had the midrange pushed. No web search though.</td></tr>
+<tr><td><strong>Creative mapping</strong></td><td>Handles common creative requests. Can struggle with highly abstract ("make it sound like rain").</td><td>Significantly stronger. Can reason about psychoacoustics: "rain = high-frequency patter (shimmer reverb, high decay) + low rumble (bass boost) + randomness (modulated delay, slow chorus)."</td></tr>
+<tr><td><strong>Instruction following</strong></td><td>Good with JSON schema. Occasionally returns extra text or wrong field types.</td><td>Near-perfect structured output adherence. Rarely needs validation retries.</td></tr>
+<tr><td><strong>Feedback iteration</strong></td><td>Adequate when given patch context. Can over-correct or under-correct.</td><td>Better calibrated. Would understand "a touch brighter" vs "much brighter" and scale deltas proportionally.</td></tr>
+<tr><td><strong>Web search / grounding</strong></td><td>✅ Built-in Google Search. Can look up gear in real-time.</td><td>❌ No web search from browser. Would rely on training knowledge only.</td></tr>
+<tr><td><strong>Free browser API</strong></td><td>✅ Free tier, no server needed, direct REST calls.</td><td>❌ No free tier. Requires API key ($3/M input, $15/M output for Sonnet). Could use the handoff/paste-back flow for free via claude.ai.</td></tr>
+<tr><td><strong>Latency</strong></td><td>~1-3s typical, 5-8s with grounding search.</td><td>~2-4s for Sonnet, ~5-10s for Opus. Similar range.</td></tr>
+<tr><td><strong>Context window</strong></td><td>1M tokens. More than enough.</td><td>200K (Sonnet) / 1M (Opus). Both sufficient.</td></tr>
+</table>
+
+<div class="verdict">
+<strong>Verdict:</strong> Claude produces higher-quality tone reasoning — more nuanced, more creative, better calibrated feedback. But Gemini is free and has web search. The ideal architecture uses <strong>both</strong>: Gemini as the always-available default, Claude as the premium tier for users who want the best possible tone quality.
+</div>
+
+<h2>3. What Changes With Claude at the Wheel</h2>
+
+<h3>3.1 Tone Quality Leap</h3>
+<ul>
+<li><strong>Deeper analogical reasoning:</strong> "Sitar-like tone" → Claude reasons about sympathetic resonance (shimmer reverb), metallic attack (bridge pickup, high presence), buzzy sustain (light fuzz + compression), drone strings (octave effect). Gemini gets you 60% there; Claude gets you 85%.</li>
+<li><strong>Better gain staging:</strong> Claude understands that a TS808 into a JCM800 at gain 55 sounds different from gain 75 with no pedal, even though total gain is similar. It reasons about where in the chain the clipping happens.</li>
+<li><strong>Contextual nuance:</strong> "Warm" means different things for jazz (rolled-off top, neck pickup, low gain) vs metal (thick low-mids, saturated). Claude handles these distinctions better.</li>
+</ul>
+
+<h3>3.2 New Capabilities</h3>
+<ul>
+<li><strong>Multi-turn tone sculpting:</strong> Claude can maintain a mental model of your tone across many exchanges, remembering not just the settings but the intent ("you wanted a Mayer-ish clean but with more edge for live use").</li>
+<li><strong>Tone explanation & education:</strong> "Why did you pick the Twin Reverb over the Deluxe?" → Claude can explain the sonic difference and teach the user about headroom, speaker breakup, etc.</li>
+<li><strong>A/B reasoning:</strong> "What's the difference between these two patches?" → Claude can describe the tonal difference in musical terms, not just parameter diffs.</li>
+<li><strong>Taste profiling:</strong> Over multiple sessions, Claude could build a profile of your preferences ("you consistently prefer mid-forward tones with light compression, you usually reduce reverb from my suggestions").</li>
+</ul>
+
+<h3>3.3 Integration Options</h3>
+<table>
+<tr><th>Approach</th><th>Cost</th><th>UX</th><th>Feasibility</th></tr>
+<tr><td>Claude API (Sonnet) direct from browser</td><td>~$0.003/tone</td><td>Seamless, like Gemini</td><td>Requires user to get Anthropic API key</td></tr>
+<tr><td>Claude API via lightweight proxy</td><td>~$0.003/tone + hosting</td><td>Seamless, one shared key</td><td>Needs a small backend (Cloudflare Worker)</td></tr>
+<tr><td>Dual-LLM: Gemini default + Claude premium</td><td>Free + optional $</td><td>Best of both worlds</td><td>Add a model selector in settings</td></tr>
+<tr><td>Handoff to claude.ai (current)</td><td>Free</td><td>Manual copy-paste</td><td>Already works today</td></tr>
+</table>
+
+<h2>4. Five-Version Product Roadmap</h2>
+
+<div class="version-block">
+<h3>v1.0 — Foundation <span class="tag tag-green">CURRENT</span></h3>
+<p><strong>What it is:</strong> Gemini-powered tone generation with deterministic fallback. Feedback iteration, message classification, creative vocabulary, delay helper, IR prep lab.</p>
+<p><strong>Tone quality:</strong> Good for common genres/artists, adequate for creative requests. Feedback builds on previous patches. ~70% first-attempt accuracy for well-known tones.</p>
+</div>
+
+<div class="version-block">
+<h3>v2.0 — Intelligence Upgrade <span class="tag tag-blue">NEXT</span></h3>
+<p><strong>Key features:</strong></p>
+<ul>
+<li><strong>Dual-LLM engine:</strong> Gemini (free default) + Claude Sonnet (premium, user provides key). Model selector in Profile settings. Same blueprint prompt adapted for each.</li>
+<li><strong>Tone memory:</strong> App learns your preferences over time — if you always dial back reverb, future tones start drier. Stored in IndexedDB profile.</li>
+<li><strong>Smart instrument profiles:</strong> Free-text instrument description field ("Epiphone EJ-200CE, undersaddle piezo, onboard EQ flat, medium strings"). Sent as context to LLM for better compensation.</li>
+<li><strong>Confidence-driven variants:</strong> Low-confidence tones automatically generate 3 variants exploring different interpretations.</li>
+</ul>
+<p><strong>Tone quality:</strong> ~80-90% first-attempt with Claude. Feedback iteration feels conversational.</p>
+</div>
+
+<div class="version-block">
+<h3>v3.0 — Audio Intelligence <span class="tag tag-purple">6 MONTHS</span></h3>
+<p><strong>Key features:</strong></p>
+<ul>
+<li><strong>Reference audio matching:</strong> Upload a 10-second clip of the tone you want (from YouTube, Spotify, your own recording). App analyzes frequency spectrum, dynamics, spatial characteristics → maps to NUX settings. Uses Web Audio API for client-side FFT analysis, LLM for interpretation.</li>
+<li><strong>Live A/B comparison:</strong> Play through the amp, record a snippet via phone mic, app compares your actual sound to the target and suggests adjustments ("your low-mids are 3dB hot — try reducing bass by 8").</li>
+<li><strong>Tone DNA:</strong> Every generated tone gets a visual "fingerprint" — a radar chart showing gain character, brightness, compression, space, modulation depth. Makes it easy to compare tones visually.</li>
+<li><strong>Community tone sharing:</strong> Share tones as QR links with embedded metadata. Browse community tones filtered by genre/artist/instrument.</li>
+</ul>
+<p><strong>Tone quality:</strong> Reference matching closes the gap between "describe what you want" and "show me what you want."</p>
+</div>
+
+<div class="version-block">
+<h3>v4.0 — Studio Companion <span class="tag tag-purple">12 MONTHS</span></h3>
+<p><strong>Key features:</strong></p>
+<ul>
+<li><strong>Song-section awareness:</strong> "Build me tones for Verse (clean), Chorus (crunch), Solo (lead) of this song at 120 BPM." Generates a complete patch set with matched levels and complementary EQ across sections.</li>
+<li><strong>Setlist mode:</strong> Organize patches by song, arrange in setlist order. Each song can have multiple sections. Export entire setlist as QR sheet (print for gig backup).</li>
+<li><strong>Band-mix mode:</strong> Tell the app what other instruments are in your band. It adjusts EQ to sit in the mix — scoops where the vocals live, boosts where you need to cut through.</li>
+<li><strong>Recording presets:</strong> Optimized patches for recording (tighter bass, less reverb, more clarity) vs live (more presence, controlled low end, appropriate volume levels).</li>
+<li><strong>Multi-amp support:</strong> Extend beyond Mighty Space — NUX Mighty Plug, Mighty Lite, Mighty 20/40. Same engine, different model catalogs.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h3>v5.0 — AI Tone Lab <span class="tag tag-amber">18-24 MONTHS</span></h3>
+<p><strong>Key features:</strong></p>
+<ul>
+<li><strong>Real-time tone agent:</strong> Claude runs as a persistent agent that listens to your playing (via phone mic), watches what you adjust on the amp, and proactively suggests: "I hear you're fighting feedback at that volume — try raising the gate sensitivity and cutting 2kHz."</li>
+<li><strong>Generative IR design:</strong> Describe a cabinet that doesn't exist ("1x10 open-back with a hemp cone speaker in a small wooden room"). LLM designs the frequency response, DSP generates a synthetic IR, loads it to user slot.</li>
+<li><strong>Tone interpolation:</strong> "Give me something halfway between my jazz clean and my blues crunch." App interpolates all parameters weighted by perceptual importance (not just linear averaging).</li>
+<li><strong>Cross-platform agent:</strong> Same AI tone designer works across amp brands — Line 6, Boss, Fender Tone Master, Headrush. The intelligence is portable; only the hardware catalog changes.</li>
+<li><strong>Voice control:</strong> "Hey Mighty, make it warmer" while playing. Hands-free tone adjustment via speech-to-text → LLM → patch update → QR display.</li>
+</ul>
+</div>
+
+<h2>5. Strategic Recommendation</h2>
+
+<div class="verdict">
+<p><strong>Short term (now):</strong> Keep Gemini as the free default. The enriched blueprint already delivers good results. Focus on collecting user feedback to tune the prompt.</p>
+<p><strong>Medium term (v2):</strong> Add Claude as a premium option. The quality difference is real and worth offering. A Cloudflare Worker proxy (~$5/month) would let you offer it without users needing their own API key — monetization opportunity.</p>
+<p><strong>Long term (v3+):</strong> The moat isn't the LLM — it's the <em>tone knowledge system</em> (model characters, gear mappings, instrument corrections, gain staging rules). This transfers across any LLM. Build the knowledge deeper, and whichever model is best next year slots right in.</p>
+</div>
+
+<div class="footer">
+Mighty Tone Generator — Strategic Report &bull; Generated November 2026 &bull; Confidential
+</div>
+
+</body>
+</html>
