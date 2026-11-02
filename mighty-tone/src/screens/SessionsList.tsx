@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { createSession, listSessions } from '../store/db.ts';
+import { createSession, listSessions, deleteSession } from '../store/db.ts';
 import type { Session } from '../store/db.ts';
 import { QrView } from '../ui/components/QrView.tsx';
 import { listTones, getLatestVersion } from '../store/db.ts';
@@ -44,10 +44,12 @@ function relativeTime(ts: number): string {
 interface SessionRowProps {
   session: Session;
   onSelect: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
-function SessionRow({ session, onSelect }: SessionRowProps) {
+function SessionRow({ session, onSelect, onDelete }: SessionRowProps) {
   const [qrString, setQrString] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (!session.id) return;
@@ -59,31 +61,59 @@ function SessionRow({ session, onSelect }: SessionRowProps) {
   }, [session.id]);
 
   return (
-    <button
-      type="button"
-      onClick={() => session.id != null && onSelect(session.id)}
-      className={`w-full flex items-center gap-3 px-4 py-3 text-left ${GLASS} mb-2`}
-      style={{ minHeight: 64 }}
-    >
-      {/* Instrument icon */}
-      <span className="text-2xl shrink-0">🎸</span>
-
-      {/* Text */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[#F2F3F8] font-semibold text-[15px] leading-snug truncate">{session.name}</p>
-        <p className="text-[#9AA0B8] text-[12px] mt-0.5">{relativeTime(session.createdAt)}</p>
-      </div>
-
-      {/* QR thumbnail */}
-      {qrString ? (
-        <div className="shrink-0 opacity-70 pointer-events-none">
-          <QrView qrString={qrString} size={36} />
+    <div className={`relative w-full flex items-center gap-2 mb-2`}>
+      {/* Main tap target */}
+      <button
+        type="button"
+        onClick={() => {
+          if (confirmDelete) { setConfirmDelete(false); return; }
+          if (session.id != null) onSelect(session.id);
+        }}
+        className={`flex-1 flex items-center gap-3 px-4 py-3 text-left ${GLASS}`}
+        style={{ minHeight: 64 }}
+      >
+        <span className="text-2xl shrink-0">🎸</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[#F2F3F8] font-semibold text-[15px] leading-snug truncate">{session.name}</p>
+          <p className="text-[#9AA0B8] text-[12px] mt-0.5">{relativeTime(session.createdAt)}</p>
         </div>
-      ) : null}
+        {qrString ? (
+          <div className="shrink-0 opacity-70 pointer-events-none">
+            <QrView qrString={qrString} size={36} />
+          </div>
+        ) : null}
+        <span className="text-[#62677E] text-sm shrink-0">›</span>
+      </button>
 
-      {/* chevron */}
-      <span className="text-[#62677E] text-sm shrink-0">›</span>
-    </button>
+      {/* Delete button — always visible as trash icon, confirm on first tap */}
+      {!confirmDelete ? (
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(true)}
+          className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#62677E] hover:text-[#F87171] hover:border-[#F87171]/30 transition-colors"
+          title="Delete session"
+        >
+          🗑
+        </button>
+      ) : (
+        <div className="shrink-0 flex gap-1">
+          <button
+            type="button"
+            onClick={() => { if (session.id != null) onDelete(session.id); }}
+            className="px-3 py-2 rounded-full bg-[#F87171]/20 border border-[#F87171]/40 text-[#F87171] text-[13px] font-semibold"
+          >
+            Delete
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(false)}
+            className="px-3 py-2 rounded-full bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#9AA0B8] text-[13px]"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -347,7 +377,15 @@ export function SessionsList({ onSelectSession, onNewSession }: SessionsListProp
           <p className="text-[#62677E] text-[15px] text-center mt-8">No results for "{search}"</p>
         )}
         {filtered.map(session => (
-          <SessionRow key={session.id} session={session} onSelect={onSelectSession} />
+          <SessionRow
+            key={session.id}
+            session={session}
+            onSelect={onSelectSession}
+            onDelete={async (id) => {
+              await deleteSession(id);
+              setSessions(prev => prev.filter(s => s.id !== id));
+            }}
+          />
         ))}
       </div>
 

@@ -7,7 +7,7 @@ import type { Patch } from '../contracts/patch.ts';
 import type { ToneMeta } from '../engine/index.ts';
 import { encodePreset, decodePreset } from '../codec/preset.ts';
 import { buildQrString, parseQrString } from '../codec/qr-string.ts';
-import { createSession, saveTone } from '../store/db.ts';
+import { createSession, saveTone, loadSessionHistory } from '../store/db.ts';
 import { generateToneAsync } from '../services/generateTone.ts';
 import { QrView } from '../ui/components/QrView.tsx';
 import { VersionTimeline } from '../ui/components/VersionTimeline.tsx';
@@ -693,6 +693,35 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
   const toneCards = messages.filter((m): m is { type: 'tone'; card: ToneCard } => m.type === 'tone').map(m => m.card);
   const latestCard = toneCards.length > 0 ? toneCards[toneCards.length - 1]! : null;
 
+  // Load history when opening an existing session
+  useEffect(() => {
+    if (!initialSessionId) return;
+    loadSessionHistory(initialSessionId).then(history => {
+      if (!history.length) return;
+      const rebuilt: Array<{ type: 'user'; text: string } | { type: 'tone'; card: ToneCard }> = [];
+      for (const msg of history) {
+        if (msg.type === 'user' && msg.text) {
+          rebuilt.push({ type: 'user', text: msg.text });
+        } else if (msg.type === 'tone' && msg.qrString && msg.patchJson) {
+          try {
+            const patch = JSON.parse(msg.patchJson) as import('../contracts/patch.ts').Patch;
+            const meta = JSON.parse(msg.metaJson ?? '{}') as import('../engine/index.ts').ToneMeta;
+            const card: ToneCard = {
+              id: crypto.randomUUID(),
+              toneId: msg.toneId!,
+              versionId: msg.versionId!,
+              qrString: msg.qrString,
+              patch,
+              meta,
+            };
+            rebuilt.push({ type: 'tone', card });
+          } catch { /* skip corrupt entry */ }
+        }
+      }
+      setMessages(rebuilt);
+    }).catch(console.error);
+  }, [initialSessionId]); // intentionally only on mount/session change
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -716,7 +745,7 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
         }
         const preset = encodePreset(patch);
         const qrString = buildQrString(preset);
-        const { tone, version } = await saveTone(sid, patch, meta);
+        const { tone, version } = await saveTone(sid, patch, meta, prompt);
         const card: ToneCard = {
           id: crypto.randomUUID(),
           toneId: tone.id!,

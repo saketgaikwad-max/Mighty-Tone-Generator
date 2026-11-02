@@ -80,6 +80,7 @@ export async function saveTone(
   sessionId: number,
   patch: Patch,
   meta: ToneMeta,
+  userPrompt?: string,
 ): Promise<{ tone: Tone; version: Version }> {
   const createdAt = Date.now();
   const preset = encodePreset(patch);
@@ -95,7 +96,7 @@ export async function saveTone(
     toneId,
     qrString,
     patchJson: JSON.stringify(patch),
-    meta: JSON.stringify(meta),
+    meta: JSON.stringify(userPrompt ? { ...meta, userPrompt } : meta),
     createdAt,
   };
   const versionId = (await db.versions.add(version as Version)) as number;
@@ -139,4 +140,56 @@ export async function listIrSlots(): Promise<IrSlot[]> {
 
 export async function deleteIrSlot(id: number): Promise<void> {
   await db.irSlots.delete(id);
+}
+
+/** Delete a session and all its tones + versions. */
+export async function deleteSession(sessionId: number): Promise<void> {
+  const tones = await db.tones.where('sessionId').equals(sessionId).toArray();
+  const toneIds = tones.map(t => t.id!).filter(Boolean);
+  if (toneIds.length > 0) {
+    await db.versions.where('toneId').anyOf(toneIds).delete();
+  }
+  await db.tones.where('sessionId').equals(sessionId).delete();
+  await db.sessions.delete(sessionId);
+}
+
+/** Load all messages for a session for history replay. */
+export interface HistoryMessage {
+  type: 'user' | 'tone';
+  text?: string;
+  qrString?: string;
+  patchJson?: string;
+  metaJson?: string;
+  toneId?: number;
+  versionId?: number;
+  createdAt: number;
+}
+
+export async function loadSessionHistory(sessionId: number): Promise<HistoryMessage[]> {
+  const tones = await db.tones.where('sessionId').equals(sessionId).sortBy('createdAt');
+  const out: HistoryMessage[] = [];
+  for (const tone of tones) {
+    const ver = await getLatestVersion(tone.id!);
+    if (!ver) continue;
+    // Recover user prompt from meta if stored there
+    let userPrompt: string | undefined;
+    try {
+      const parsed = JSON.parse(ver.meta ?? '{}') as Record<string, unknown>;
+      if (typeof parsed['userPrompt'] === 'string') userPrompt = parsed['userPrompt'];
+    } catch { /* ignore */ }
+    if (userPrompt) {
+      out.push({ type: 'user', text: userPrompt, createdAt: ver.createdAt - 1 });
+    }
+    out.push({
+      type: 'tone',
+      qrString: ver.qrString,
+      patchJson: ver.patchJson,
+      metaJson: ver.meta,
+      toneId: tone.id,
+      versionId: ver.id,
+      createdAt: ver.createdAt,
+    });
+  }
+  out.sort((a, b) => a.createdAt - b.createdAt);
+  return out;
 }
