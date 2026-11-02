@@ -110,8 +110,10 @@ export function Profile() {
   // Gemini key saved confirmation
   const [geminiSaved, setGeminiSaved] = useState(false);
 
-  // Instrument detail sheet
+  // Instrument detail + edit sheet
   const [detailInstrument, setDetailInstrument] = useState<string | null>(null);
+  const [editingInstrumentName, setEditingInstrumentName] = useState('');
+  const [isEditingInstrument, setIsEditingInstrument] = useState(false);
 
   // IR slots count
   const [irSlotCount, setIrSlotCount] = useState(0);
@@ -517,7 +519,7 @@ export function Profile() {
         <div
           className="fixed inset-0 z-50 flex flex-col justify-end"
           style={{ background: 'rgba(0,0,0,0.65)' }}
-          onClick={() => setDetailInstrument(null)}
+          onClick={() => { setDetailInstrument(null); setIsEditingInstrument(false); }}
         >
           <div
             className="w-full flex flex-col gap-4 px-4 pt-3 pb-10"
@@ -526,7 +528,7 @@ export function Profile() {
               backdropFilter: 'blur(24px)',
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: '26px 26px 0 0',
-              maxHeight: '70vh',
+              maxHeight: '75vh',
               overflowY: 'auto',
             }}
             onClick={(e) => e.stopPropagation()}
@@ -541,51 +543,144 @@ export function Profile() {
               </p>
               <button
                 type="button"
-                onClick={() => setDetailInstrument(null)}
+                onClick={() => { setDetailInstrument(null); setIsEditingInstrument(false); }}
                 style={{ color: '#7C6CFF', minHeight: 44, minWidth: 44, fontSize: 15, fontWeight: 600 }}
               >
                 Done
               </button>
             </div>
 
-            {/* details */}
-            <div
-              className="flex flex-col gap-0 rounded-[18px] overflow-hidden"
-              style={{ background: 'rgba(28,32,52,0.62)', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              {[
-                { label: 'Type', value: detailInstrument.toLowerCase().includes('mandolin') ? 'Mandolin' : 'Guitar' },
-                { label: 'Kind', value: detailInstrument.toLowerCase().includes('ej-200') || detailInstrument.toLowerCase().includes('jumbo') ? 'Acoustic' : 'Electric' },
-                { label: 'Pickup', value: detailInstrument.toLowerCase().includes('mandolin') ? 'Stacked HB' : detailInstrument.toLowerCase().includes('avion') ? 'Humbuckers (HH)' : detailInstrument.toLowerCase().includes('jumbo') ? 'Fishman Isys active' : detailInstrument.toLowerCase().includes('ej-200') ? 'Passive piezo' : 'Unknown' },
-              ].map(({ label, value }, i, arr) => (
+            {/* instrument metadata — derived from known instruments or inferred */}
+            {(() => {
+              const lower = detailInstrument.toLowerCase();
+              const isAcoustic = lower.includes('jumbo') || lower.includes('ej-200') || lower.includes('acoustic') || lower.includes('dreadnought');
+              const isMandolin = lower.includes('mandolin');
+              const type = isMandolin ? 'Mandolin' : 'Guitar';
+              const kind = isAcoustic ? 'Acoustic' : isMandolin ? 'Mandolin (electric)' : 'Electric';
+              const pickup = lower.includes('avion') ? 'Humbuckers (HH passive)'
+                : lower.includes('jumbo') ? 'Fishman Isys (active bass/treble/phase)'
+                : lower.includes('ej-200') ? 'Under-saddle passive piezo'
+                : lower.includes('mandolin') ? 'Stacked HB (vol/tone)'
+                : 'Unknown — engine uses generic corrections';
+              const engineId = lower.includes('avion') ? 'electric-humbucker'
+                : lower.includes('jumbo') ? 'acoustic-magnetic'
+                : lower.includes('ej-200') ? 'acoustic-piezo'
+                : lower.includes('mandolin') ? 'mandolin-magnetic'
+                : 'electric-humbucker';
+              const rows = [
+                { label: 'Type', value: type },
+                { label: 'Kind', value: kind },
+                { label: 'Pickup', value: pickup },
+                { label: 'Engine ID', value: engineId },
+              ];
+              return (
                 <div
-                  key={label}
-                  className="flex items-center px-4 gap-3"
-                  style={{ minHeight: 48, borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
+                  className="flex flex-col rounded-[18px] overflow-hidden"
+                  style={{ background: 'rgba(28,32,52,0.62)', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
-                  <span className="text-[#9AA0B8] text-[14px] w-20 shrink-0">{label}</span>
-                  <span className="text-[#F2F3F8] text-[15px]">{value}</span>
+                  {rows.map(({ label, value }, i) => (
+                    <div
+                      key={label}
+                      className="flex items-start px-4 gap-3"
+                      style={{ minHeight: 48, borderBottom: i < rows.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none', paddingTop: 12, paddingBottom: 12 }}
+                    >
+                      <span className="text-[#9AA0B8] text-[13px] w-20 shrink-0 pt-0.5">{label}</span>
+                      <span className="text-[#F2F3F8] text-[14px] flex-1">{value}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
 
             <p className="text-[#62677E] text-[12px] px-1">
-              The engine uses this instrument's pickup type to apply tone corrections automatically.
+              The engine applies pickup-specific corrections (gain, EQ, gate) automatically based on the instrument kind and pickup type above.
             </p>
 
-            {/* remove button */}
-            <button
-              type="button"
-              onClick={() => {
-                const idx = instruments.indexOf(detailInstrument);
-                if (idx !== -1) removeInstrument(idx);
-                setDetailInstrument(null);
-              }}
-              className="w-full py-3 rounded-[14px] text-[15px] font-semibold"
-              style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', border: '1px solid rgba(248,113,113,0.25)' }}
-            >
-              Remove instrument
-            </button>
+            {/* Edit name */}
+            {isEditingInstrument ? (
+              <div className="flex flex-col gap-2">
+                <label className="text-[#9AA0B8] text-[12px] uppercase tracking-wider">Rename instrument</label>
+                <input
+                  autoFocus
+                  type="text"
+                  value={editingInstrumentName}
+                  onChange={e => setEditingInstrumentName(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      const trimmed = editingInstrumentName.trim();
+                      if (trimmed) {
+                        const idx = instruments.indexOf(detailInstrument);
+                        if (idx !== -1) {
+                          const updated = [...instruments];
+                          updated[idx] = trimmed;
+                          saveInstruments(updated);
+                          setDetailInstrument(trimmed);
+                        }
+                      }
+                      setIsEditingInstrument(false);
+                    }
+                    if (e.key === 'Escape') setIsEditingInstrument(false);
+                  }}
+                  className="w-full bg-[#141826] border border-[#7C6CFF]/40 rounded-[12px] px-4 py-3 text-[#F2F3F8] text-[15px] outline-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = editingInstrumentName.trim();
+                      if (trimmed) {
+                        const idx = instruments.indexOf(detailInstrument);
+                        if (idx !== -1) {
+                          const updated = [...instruments];
+                          updated[idx] = trimmed;
+                          saveInstruments(updated);
+                          setDetailInstrument(trimmed);
+                        }
+                      }
+                      setIsEditingInstrument(false);
+                    }}
+                    className="flex-1 py-3 rounded-[14px] text-[15px] font-semibold text-white"
+                    style={{ background: 'linear-gradient(135deg,#7C6CFF,#4F8BFF)' }}
+                  >
+                    Save name
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingInstrument(false)}
+                    className="px-6 py-3 rounded-[14px] text-[15px] font-medium text-[#9AA0B8]"
+                    style={{ background: 'rgba(28,32,52,0.62)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                {/* Edit button */}
+                <button
+                  type="button"
+                  onClick={() => { setEditingInstrumentName(detailInstrument); setIsEditingInstrument(true); }}
+                  className="flex-1 py-3 rounded-[14px] text-[15px] font-semibold"
+                  style={{ background: 'rgba(124,108,255,0.15)', color: '#9A8CFF', border: '1px solid rgba(124,108,255,0.3)' }}
+                >
+                  ✎ Edit name
+                </button>
+                {/* Remove button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const idx = instruments.indexOf(detailInstrument);
+                    if (idx !== -1) removeInstrument(idx);
+                    setDetailInstrument(null);
+                    setIsEditingInstrument(false);
+                  }}
+                  className="flex-1 py-3 rounded-[14px] text-[15px] font-semibold"
+                  style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', border: '1px solid rgba(248,113,113,0.25)' }}
+                >
+                  🗑 Remove
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -12,16 +12,22 @@ const GRADIENT_BTN =
 
 // ── instruments ───────────────────────────────────────────────────────────────
 const INSTRUMENTS = [
-  { id: 'greg-bennett', label: 'Greg Bennett Avion AV-6', emoji: '🎸' },
-  { id: 'hb-jumbo', label: 'HB Jumbo King', emoji: '🎸' },
-  { id: 'epiphone-ej200', label: 'Epiphone EJ-200CE', emoji: '🎸' },
-  { id: 'hb-mandolin', label: 'HB F-style mandolin', emoji: '🎻' },
-  { id: 'other', label: 'Other', emoji: '🎵' },
+  { id: 'greg-bennett', label: 'Greg Bennett Avion AV-6', emoji: '🎸', kind: 'electric', pickup: 'Humbuckers (HH)', engineId: 'electric-humbucker' },
+  { id: 'hb-jumbo', label: 'HB Jumbo King', emoji: '🎸', kind: 'acoustic', pickup: 'Fishman Isys (active)', engineId: 'acoustic-magnetic' },
+  { id: 'epiphone-ej200', label: 'Epiphone EJ-200CE', emoji: '🎸', kind: 'acoustic', pickup: 'Passive piezo', engineId: 'acoustic-piezo' },
+  { id: 'hb-mandolin', label: 'HB F-style mandolin', emoji: '🎻', kind: 'mandolin', pickup: 'Stacked HB', engineId: 'mandolin-magnetic' },
+  { id: 'other', label: 'Other', emoji: '🎵', kind: 'electric', pickup: 'Unknown', engineId: 'electric-humbucker' },
 ] as const;
 
 type InstrumentId = (typeof INSTRUMENTS)[number]['id'];
 
-const PICKUP_POSITIONS = ['Neck', 'Both', 'Bridge'] as const;
+// Pickup position options differ by instrument kind
+function pickupPositionsFor(instId: InstrumentId): string[] {
+  const inst = INSTRUMENTS.find(i => i.id === instId);
+  if (!inst || inst.kind === 'acoustic') return []; // acoustic/mandolin: no pickup position
+  if (inst.kind === 'mandolin') return [];
+  return ['Neck', 'Both', 'Bridge']; // electric only
+}
 const PLAYING_CONTEXTS = ['Home speaker', 'Headphones', 'Band mix'] as const;
 
 function relativeTime(ts: number): string {
@@ -90,6 +96,13 @@ function NewSessionSheet({ onCancel, onCreate }: NewSessionSheetProps) {
   const [name, setName] = useState('');
   const [instrument, setInstrument] = useState<InstrumentId>('greg-bennett');
   const [pickup, setPickup] = useState<string>('Neck');
+
+  // Reset pickup when instrument changes — acoustic/mandolin have no position
+  function handleInstrumentChange(id: InstrumentId) {
+    setInstrument(id);
+    const positions = pickupPositionsFor(id);
+    setPickup(positions[0] ?? '');
+  }
   const [tuning, setTuning] = useState<'Standard' | 'Custom'>('Standard');
   const [customTuning, setCustomTuning] = useState('');
   const [capo, setCapo] = useState(0);
@@ -151,7 +164,7 @@ function NewSessionSheet({ onCancel, onCreate }: NewSessionSheetProps) {
               <button
                 key={inst.id}
                 type="button"
-                onClick={() => setInstrument(inst.id)}
+                onClick={() => handleInstrumentChange(inst.id)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-[12px] text-left transition-colors ${
                   instrument === inst.id
                     ? 'bg-gradient-to-br from-[#7C6CFF]/20 to-[#4F8BFF]/20 border border-[#7C6CFF]/40'
@@ -168,17 +181,37 @@ function NewSessionSheet({ onCancel, onCreate }: NewSessionSheetProps) {
           </div>
         </div>
 
-        {/* Pickup */}
-        <div>
-          <label className="text-[#9AA0B8] text-[12px] uppercase tracking-wider mb-2 block">Pickup position</label>
-          <div className="flex gap-1 bg-[rgba(28,32,52,0.62)] rounded-full p-1 border border-white/[0.08]">
-            {PICKUP_POSITIONS.map(pos => (
-              <button key={pos} type="button" onClick={() => setPickup(pos)} className={segBtn(pickup === pos)}>
-                {pos}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Pickup — only for electric; show info row for acoustic/mandolin */}
+        {(() => {
+          const positions = pickupPositionsFor(instrument);
+          const instMeta = INSTRUMENTS.find(i => i.id === instrument);
+          if (positions.length > 0) {
+            return (
+              <div>
+                <label className="text-[#9AA0B8] text-[12px] uppercase tracking-wider mb-2 block">Pickup position</label>
+                <div className="flex gap-1 bg-[rgba(28,32,52,0.62)] rounded-full p-1 border border-white/[0.08]">
+                  {positions.map(pos => (
+                    <button key={pos} type="button" onClick={() => setPickup(pos)} className={segBtn(pickup === pos)}>
+                      {pos}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+          // Acoustic / mandolin: show pickup type as read-only info
+          return (
+            <div>
+              <label className="text-[#9AA0B8] text-[12px] uppercase tracking-wider mb-1 block">Pickup</label>
+              <div
+                className="px-4 py-3 rounded-[12px] text-[#9AA0B8] text-[14px]"
+                style={{ background: 'rgba(28,32,52,0.62)', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                {instMeta?.pickup ?? 'N/A'} — position not applicable
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Tuning */}
         <div>
