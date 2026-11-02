@@ -22,7 +22,7 @@ export function generateTone(
 }
 
 export { parse, type Intent, type ParseInput } from './parse.ts';
-export { solve, type SolveResult } from './solve.ts';
+export { solve, refinePatch, type SolveResult } from './solve.ts';
 export { engineKnowledge, type EngineKnowledge } from './knowledge.ts';
 export { bpmToDelayByte, divisionToMs, delayModelIds, tempoDelayModels, delayByteToMs, type DelayDivision, type DelayByteResult } from './delay.ts';
 export { generateVariants } from './variants.ts';

@@ -27,7 +27,7 @@ export function DelayHelper({ latestPatch, onApply, isOpen, onClose }: DelayHelp
   const currentDlyModelId = latestPatch?.blocks.dly?.modelId;
   const defaultModel = delayModels.find((m) => m.id === currentDlyModelId)?.id ?? delayModels[0]?.id ?? '';
   const [modelId, setModelId] = useState(defaultModel);
-  const [typeIndex, setTypeIndex] = useState(0);
+  const typeIndex = delayModels.findIndex((m) => m.id === modelId);
 
   // Tap tempo
   const tapTimestamps = useRef<number[]>([]);
@@ -76,7 +76,7 @@ export function DelayHelper({ latestPatch, onApply, isOpen, onClose }: DelayHelp
       />
       {/* Bottom sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 bg-[#171b2c] rounded-t-[26px] border-t border-white/[0.08] shadow-[0_-8px_40px_rgba(0,0,0,0.5)]"
+        className="fixed bottom-0 left-0 right-0 z-50 sm:max-w-[480px] sm:mx-auto sm:rounded-[26px] sm:mb-4 bg-[#171b2c] rounded-t-[26px] border-t border-white/[0.08] shadow-[0_-8px_40px_rgba(0,0,0,0.5)]"
         style={{ height: '50vh', display: 'flex', flexDirection: 'column' }}
       >
         {/* Drag handle */}
@@ -110,7 +110,6 @@ export function DelayHelper({ latestPatch, onApply, isOpen, onClose }: DelayHelp
                   key={label}
                   type="button"
                   onClick={() => {
-                    setTypeIndex(i);
                     if (delayModels[i]) setModelId(delayModels[i]!.id);
                   }}
                   style={{ minHeight: 32 }}

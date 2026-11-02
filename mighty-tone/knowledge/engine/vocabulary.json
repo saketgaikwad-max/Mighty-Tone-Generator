@@ -217,6 +217,71 @@
       "synonyms": ["noiseless", "noise-free", "silent", "hiss-free", "gated"],
       "deltas": { "gate.sensitivity": 15 },
       "blocks": { "gate": true }
+    },
+    "organ": {
+      "synonyms": ["reed organ", "hammond", "b3", "church organ", "pipe organ", "organ tone", "organ-like", "keyboard"],
+      "deltas": { "amp.gain": -10, "amp.treble": -5, "amp.mid": 8, "comp.sustain": 10, "mod.depth": 15 },
+      "blocks": { "mod": true, "comp": true },
+      "models": { "mod": "mod.rotary" },
+      "archetypes": { "clean": 2 }
+    },
+    "rotary": {
+      "synonyms": ["leslie", "leslie speaker", "spinning speaker", "leslie sim", "leslie cabinet"],
+      "deltas": { "mod.rate": 10 },
+      "blocks": { "mod": true },
+      "models": { "mod": "mod.rotary" },
+      "archetypes": { "clean": 1 }
+    },
+    "vibrato": {
+      "synonyms": ["pitch vibrato", "wobble", "pitch wobble"],
+      "deltas": { "mod.depth": 12 },
+      "blocks": { "mod": true },
+      "models": { "mod": "mod.vibrato" }
+    },
+    "octave": {
+      "synonyms": ["octaver", "sub-octave", "octave down", "octave up", "sub"],
+      "deltas": { "mod.depth": 15 },
+      "blocks": { "mod": true },
+      "models": { "mod": "mod.mono-octave" }
+    },
+    "synth": {
+      "synonyms": ["synthesizer", "synthy", "synth-like", "pad", "pad-like", "keys", "keyboard-like"],
+      "deltas": { "amp.gain": -5, "rvb.level": 15, "rvb.decay": 15, "mod.depth": 15 },
+      "blocks": { "mod": true, "rvb": true, "comp": true },
+      "models": { "mod": "mod.mono-octave" },
+      "archetypes": { "clean": 2 }
+    },
+    "shimmer": {
+      "synonyms": ["shimmer reverb", "crystalline", "angelic", "cathedral", "otherworldly"],
+      "deltas": { "rvb.level": 20, "rvb.decay": 25 },
+      "blocks": { "rvb": true },
+      "models": { "rvb": "rvb.shimmer" },
+      "archetypes": { "clean": 1 }
+    },
+    "wah": {
+      "synonyms": ["auto-wah", "autowah", "envelope filter", "talk box", "talking", "quack"],
+      "deltas": { "efx.drive": 10 },
+      "blocks": { "efx": true },
+      "models": { "efx": "efx.touch-wah" }
+    },
+    "vibe": {
+      "synonyms": ["uni-vibe", "univibe", "psychedelic", "hendrix"],
+      "deltas": { "mod.depth": 12, "mod.rate": 8 },
+      "blocks": { "mod": true },
+      "models": { "mod": "mod.u-vibe" },
+      "archetypes": { "crunch": 1 }
+    },
+    "flanger": {
+      "synonyms": ["flanged", "flanging", "jet", "jet-like"],
+      "deltas": { "mod.depth": 10 },
+      "blocks": { "mod": true },
+      "models": { "mod": "mod.flanger" }
+    },
+    "spring": {
+      "synonyms": ["spring reverb", "springy", "drip", "drippy", "surf reverb"],
+      "deltas": { "rvb.level": 10, "rvb.decay": 8 },
+      "blocks": { "rvb": true },
+      "models": { "rvb": "rvb.spring" }
     }
   }
 }

@@ -9,14 +9,18 @@ import { encodePreset, decodePreset } from '../codec/preset.ts';
 import { buildQrString, parseQrString } from '../codec/qr-string.ts';
 import { createSession, saveTone, loadSessionHistory, listIrSlots } from '../store/db.ts';
 import type { IrSlot } from '../store/db.ts';
-import { generateToneAsync } from '../services/generateTone.ts';
+import { generateToneAsync, refineToneAsync } from '../services/generateTone.ts';
+import { classifyMessage } from '../llm/classify.ts';
+import { converse } from '../llm/converse.ts';
 import { QrView } from '../ui/components/QrView.tsx';
 import { VersionTimeline } from '../ui/components/VersionTimeline.tsx';
 import { LockControls } from '../ui/components/LockControls.tsx';
 import { DelayHelper } from '../ui/components/DelayHelper.tsx';
 import { generateVariants } from '../engine/variants.ts';
 import { buildHandoffPrompt, parseHandoffResponse } from '../llm/handoff.ts';
+import { SYSTEM_PROMPT as TONE_BLUEPRINT } from '../llm/gemini.ts';
 import { solve } from '../engine/solve.ts';
+import { modelById } from '../knowledge/device.ts';
 
 // ── curated free IR suggestions ───────────────────────────────────────────────
 const IR_SUGGESTIONS: Record<string, { name: string; source: string; url: string; notes: string }[]> = {
@@ -118,7 +122,7 @@ const CHIP_INACTIVE = 'bg-[#141826] border-white/[0.08] text-[#9AA0B8]';
 interface FeedbackSheetProps {
   locked: BlockKind[];
   onClose: () => void;
-  onSend: (prompt: string, newLocked: BlockKind[]) => void;
+  onSend: (prompt: string, newLocked: BlockKind[], variantCount: number) => void;
 }
 
 function FeedbackSheet({ locked, onClose, onSend }: FeedbackSheetProps) {
@@ -137,18 +141,17 @@ function FeedbackSheet({ locked, onClose, onSend }: FeedbackSheetProps) {
   function handleSend() {
     let prompt = [...tags, freeText.trim()].filter(Boolean).join('. ');
     if (!prompt) prompt = 'Adjust tone';
-    if (variantCount > 1) prompt += ` Give me ${variantCount} variants.`;
-    onSend(prompt, lockedBlocks);
+    onSend(prompt, lockedBlocks, variantCount);
   }
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end"
+      className="fixed inset-0 z-50 flex items-end justify-center"
       style={{ background: 'rgba(0,0,0,0.6)' }}
       onClick={onClose}
     >
       <div
-        className="w-full bg-[#171b2c] rounded-t-[26px] border-t border-white/[0.08] overflow-y-auto"
+        className="w-full sm:max-w-[480px] sm:mx-auto sm:rounded-[26px] sm:mb-4 bg-[#171b2c] rounded-t-[26px] border-t border-white/[0.08] overflow-y-auto"
         style={{ maxHeight: '70vh' }}
         onClick={e => e.stopPropagation()}
       >
@@ -270,12 +273,12 @@ function HandoffSheet({ latestPrompt, instrument, sessionId, onClose, onToneSave
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end"
+      className="fixed inset-0 z-50 flex items-end justify-center"
       style={{ background: 'rgba(0,0,0,0.6)' }}
       onClick={onClose}
     >
       <div
-        className="w-full bg-[#171b2c] rounded-t-[26px] border-t border-white/[0.08] overflow-y-auto"
+        className="w-full sm:max-w-[480px] sm:mx-auto sm:rounded-[26px] sm:mb-4 bg-[#171b2c] rounded-t-[26px] border-t border-white/[0.08] overflow-y-auto"
         style={{ maxHeight: '70vh' }}
         onClick={e => e.stopPropagation()}
       >
@@ -313,6 +316,16 @@ function HandoffSheet({ latestPrompt, instrument, sessionId, onClose, onToneSave
             className={`${GRADIENT_BTN} py-3 text-[15px] disabled:opacity-40`}
             style={{ minHeight: 44 }}
           >Build tone from reply</button>
+          <button type="button" onClick={() => {
+            const blob = new Blob([TONE_BLUEPRINT], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'mighty-tone-blueprint.txt'; a.click();
+            URL.revokeObjectURL(url);
+          }}
+            className="py-2 rounded-full bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#9AA0B8] text-[13px] font-medium"
+            style={{ minHeight: 40 }}
+          >↓ Download full blueprint (.txt)</button>
           {msg && <p className="text-[#9AA0B8] text-[13px]">{msg}</p>}
         </div>
       </div>
@@ -444,7 +457,7 @@ interface ToneResponseCardProps {
   onApplyDelay: (byte: number, modelId: string) => Promise<void>;
   onRestore: (qrString: string) => void;
   locked: BlockKind[];
-  onFeedbackSend: (prompt: string, newLocked: BlockKind[]) => void;
+  onFeedbackSend: (prompt: string, newLocked: BlockKind[], variantCount: number) => void;
   onGoToIrLab?: () => void;
 }
 
@@ -487,7 +500,7 @@ function ToneResponseCard({
       {/* ── top row: QR + name + confidence ── */}
       <div className="flex gap-3 items-start">
         {/* QR */}
-        <div className="shrink-0">
+        <div className="shrink-0 [&>*]:!size-[88px] sm:[&>*]:!size-[100px]">
           <QrView qrString={card.qrString} size={88} />
         </div>
 
@@ -618,14 +631,14 @@ function ToneResponseCard({
         <FeedbackSheet
           locked={locked}
           onClose={() => setShowFeedback(false)}
-          onSend={(prompt, newLocked) => { setShowFeedback(false); onFeedbackSend(prompt, newLocked); }}
+          onSend={(prompt, newLocked, variantCount) => { setShowFeedback(false); onFeedbackSend(prompt, newLocked, variantCount); }}
         />
       )}
 
       {/* ── Delay helper ── */}
       <DelayHelper
         latestPatch={card.patch}
-        onApply={(byte, modelId) => void onApplyDelay(byte, modelId)}
+        onApply={(byte, modelId) => void onApplyDelay(byte, modelId).then(() => setShowDelay(false))}
         isOpen={showDelay}
         onClose={() => setShowDelay(false)}
       />
@@ -684,7 +697,8 @@ interface SessionChatProps {
 }
 
 export function SessionChat({ sessionId: initialSessionId, instrumentId: initialInstrumentId, onGoToIrLab: _onGoToIrLab }: SessionChatProps = {}) {
-  const [messages, setMessages] = useState<Array<{ type: 'user'; text: string } | { type: 'tone'; card: ToneCard }>>([]);
+  const [messages, setMessages] = useState<Array<{ type: 'user'; text: string } | { type: 'tone'; card: ToneCard } | { type: 'assistant'; text: string }>>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState('');
   const defaultInstrument = (initialInstrumentId ?? localStorage.getItem('default-instrument') ?? 'electric-single-coil') as InstrumentId;
   const [instrument, setInstrument] = useState<InstrumentId>(defaultInstrument);
@@ -708,7 +722,7 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
     if (!initialSessionId) return;
     loadSessionHistory(initialSessionId).then(history => {
       if (!history.length) return;
-      const rebuilt: Array<{ type: 'user'; text: string } | { type: 'tone'; card: ToneCard }> = [];
+      const rebuilt: Array<{ type: 'user'; text: string } | { type: 'tone'; card: ToneCard } | { type: 'assistant'; text: string }> = [];
       for (const msg of history) {
         if (msg.type === 'user' && msg.text) {
           rebuilt.push({ type: 'user', text: msg.text });
@@ -740,13 +754,67 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
     const prompt = input.trim();
     if (!prompt || loading) return;
     setInput('');
+    if (textareaRef.current) textareaRef.current.style.height = '44px';
     setLoading(true);
-    // push user bubble
     setMessages(prev => [...prev, { type: 'user', text: prompt }]);
+
+    const chatHistory = messages
+      .filter((m): m is { type: 'user'; text: string } => m.type === 'user')
+      .map(m => m.text)
+      .slice(-5);
+
     setTimeout(async () => {
       try {
+        const kind = await classifyMessage(prompt, latestCard !== null);
+
+        if (kind === 'conversation') {
+          const patchDesc = latestCard ? describePatch(latestCard.patch) : undefined;
+          const patchSummary = patchDesc
+            ? `${patchDesc.blocks.amp?.model ?? ''} amp, gain ${patchDesc.blocks.amp?.params['Gain'] ?? '?'}`
+            : undefined;
+          const response = await converse(prompt, {
+            patchDescription: patchSummary,
+            instrument,
+            chatHistory,
+          });
+          setMessages(prev => [...prev, { type: 'assistant', text: response }]);
+          setLoading(false);
+          return;
+        }
+
+        if (kind === 'feedback' && latestCard) {
+          const { patch, meta } = await refineToneAsync(
+            latestCard.patch,
+            prompt,
+            instrument,
+            locked,
+            activeIrSlot?.slotNumber,
+          );
+          let sid = sessionId;
+          if (sid === null) {
+            const session = await createSession(`${meta.archetype} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+            sid = session.id!;
+            setSessionId(sid);
+          }
+          const preset = encodePreset(patch);
+          const qrString = buildQrString(preset);
+          const { tone, version } = await saveTone(sid, patch, meta, prompt);
+          const card: ToneCard = {
+            id: crypto.randomUUID(),
+            toneId: tone.id!,
+            versionId: version.id!,
+            qrString,
+            patch,
+            meta,
+            userPrompt: prompt,
+          };
+          setMessages(prev => [...prev, { type: 'tone', card }]);
+          setLoading(false);
+          return;
+        }
+
         let sid = sessionId;
-        const { patch, meta } = await generateToneAsync(prompt, instrument, locked, activeIrSlot?.slotNumber);
+        const { patch, meta } = await generateToneAsync(prompt, instrument, locked, activeIrSlot?.slotNumber, { chatHistory });
         if (sid === null) {
           const name = `${meta.archetype} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
           const session = await createSession(name);
@@ -767,7 +835,8 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
         };
         setMessages(prev => [...prev, { type: 'tone', card }]);
       } catch (err) {
-        console.error('generateAndSave failed', err);
+        console.error('handleSend failed', err);
+        setMessages(prev => [...prev, { type: 'assistant', text: 'Something went wrong generating the tone. Please try again.' }]);
       } finally {
         setLoading(false);
       }
@@ -810,29 +879,33 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
     }
   }
 
-  function handleFeedbackSend(prompt: string, newLocked: BlockKind[]) {
+  function handleFeedbackSend(prompt: string, newLocked: BlockKind[], variantCount: number = 1) {
     setLocked(newLocked);
-    setInput(prompt);
-    // Trigger send with the feedback prompt
     const promptTrimmed = prompt.trim();
     if (!promptTrimmed || loading) return;
-    setInput('');
     setLoading(true);
     setMessages(prev => [...prev, { type: 'user', text: promptTrimmed }]);
     setTimeout(async () => {
       try {
         let sid = sessionId;
-        const { patch, meta } = await generateToneAsync(promptTrimmed, instrument, newLocked);
+
+        const generateFn = latestCard
+          ? () => refineToneAsync(latestCard.patch, promptTrimmed, instrument, newLocked, activeIrSlot?.slotNumber)
+          : () => generateToneAsync(promptTrimmed, instrument, newLocked, activeIrSlot?.slotNumber);
+
+        const { patch, meta } = await generateFn();
+
         if (sid === null) {
           const name = `${meta.archetype} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
           const session = await createSession(name);
           sid = session.id!;
           setSessionId(sid);
         }
+
         const preset = encodePreset(patch);
         const qrString = buildQrString(preset);
-        const { tone, version } = await saveTone(sid, patch, meta);
-        const card: ToneCard = {
+        const { tone, version } = await saveTone(sid, patch, meta, promptTrimmed);
+        const primaryCard: ToneCard = {
           id: crypto.randomUUID(),
           toneId: tone.id!,
           versionId: version.id!,
@@ -841,7 +914,33 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
           meta,
           userPrompt: promptTrimmed,
         };
-        setMessages(prev => [...prev, { type: 'tone', card }]);
+        setMessages(prev => [...prev, { type: 'tone', card: primaryCard }]);
+
+        if (variantCount > 1 && tone.id) {
+          const variants = generateVariants(patch, variantCount - 1, tone.id, newLocked);
+          for (const variantPatch of variants) {
+            try {
+              const vPreset = encodePreset(variantPatch);
+              const vQr = buildQrString(vPreset);
+              const variantMeta: ToneMeta = {
+                archetype: meta.archetype,
+                ruleTrace: ['variant'],
+                confidence: meta.confidence * 0.85,
+                unknownTerms: [],
+              };
+              const { tone: vTone, version: vVersion } = await saveTone(sid!, variantPatch, variantMeta);
+              const vCard: ToneCard = {
+                id: crypto.randomUUID(),
+                toneId: vTone.id!,
+                versionId: vVersion.id!,
+                qrString: vQr,
+                patch: variantPatch,
+                meta: variantMeta,
+              };
+              setMessages(prev => [...prev, { type: 'tone', card: vCard }]);
+            } catch { /* skip failed variant */ }
+          }
+        }
       } catch (err) {
         console.error('feedbackSend failed', err);
       } finally {
@@ -884,14 +983,24 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
     const patch = latestCard.patch;
     const dlyBlock = patch.blocks.dly;
     if (!dlyBlock) return;
-    const updatedParams = { ...dlyBlock.params };
+
+    // If the model changed, start from the new model's default params
+    let updatedParams: Record<string, number>;
+    if (modelId !== dlyBlock.modelId) {
+      const newModel = modelById(modelId);
+      if (!newModel) return;
+      updatedParams = Object.fromEntries(newModel.params.map((p) => [p.key, p.default]));
+    } else {
+      updatedParams = { ...dlyBlock.params };
+    }
+
     const timeKey = 'time' in updatedParams ? 'time' : 'rate' in updatedParams ? 'rate' : null;
     if (!timeKey) return;
     updatedParams[timeKey] = delayByte;
 
     const updatedPatch: Patch = {
       ...patch,
-      blocks: { ...patch.blocks, dly: { ...dlyBlock, modelId, params: updatedParams } },
+      blocks: { ...patch.blocks, dly: { ...dlyBlock, enabled: true, modelId, params: updatedParams } },
     };
 
     if (!sessionId) return;
@@ -929,7 +1038,7 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
             return (
               <div key={i} className="flex justify-end">
                 <div
-                  className="max-w-[75%] px-4 py-2.5 rounded-[18px] rounded-tr-[6px] text-[15px] text-white leading-snug"
+                  className="max-w-[75%] sm:max-w-[80%] lg:max-w-[70%] px-4 py-2.5 rounded-[18px] rounded-tr-[6px] text-[15px] text-white leading-snug"
                   style={{ background: 'linear-gradient(135deg, #7C6CFF, #4F8BFF)' }}
                 >
                   {msg.text}
@@ -937,7 +1046,17 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
               </div>
             );
           }
-          // tone card
+          if (msg.type === 'assistant') {
+            return (
+              <div key={i} className="flex justify-start">
+                <div
+                  className={`max-w-[85%] sm:max-w-[80%] lg:max-w-[70%] ${GLASS} px-4 py-3 rounded-[18px] rounded-tl-[6px] text-[14px] text-[#E0E2EE] leading-relaxed whitespace-pre-wrap`}
+                >
+                  {msg.text}
+                </div>
+              </div>
+            );
+          }
           const { card } = msg;
           return (
             <div key={card.id} className="flex flex-col gap-2">
@@ -975,7 +1094,7 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
       )}
 
       {/* Instrument chips + settings toggle */}
-      <div className="flex gap-2 px-3 py-2 overflow-x-auto border-t border-white/[0.08] bg-[#141826] items-center no-scrollbar">
+      <div className="flex gap-2 px-3 py-2 overflow-x-auto sm:flex-wrap border-t border-white/[0.08] bg-[#141826] items-center no-scrollbar">
         {/* ⚙ icon button */}
         <button
           type="button"
@@ -1020,25 +1139,23 @@ export function SessionChat({ sessionId: initialSessionId, instrumentId: initial
       {/* Composer bar */}
       <div className="border-t border-white/[0.08] bg-[#141826] p-3 flex items-end gap-2">
         <textarea
+          ref={textareaRef}
           rows={1}
           placeholder="Describe a tone… (hold 🎙 to dictate)"
           value={input}
           onChange={e => {
             setInput(e.target.value);
-            // auto-grow
             const el = e.target;
             el.style.height = 'auto';
             el.style.height = Math.min(el.scrollHeight, 160) + 'px';
           }}
           onFocus={e => {
-            // expand to at least 3 rows on focus
             const el = e.target;
             el.style.height = 'auto';
             el.style.height = Math.max(el.scrollHeight, 88) + 'px';
           }}
           onBlur={e => {
-            // collapse back if empty
-            if (!input.trim()) e.target.style.height = '44px';
+            if (!e.target.value.trim()) e.target.style.height = '44px';
           }}
           onKeyDown={handleKeyDown}
           className="flex-1 bg-[rgba(28,32,52,0.62)] border border-white/[0.08] text-[#F2F3F8] rounded-[16px] px-4 py-3 text-[15px] outline-none placeholder:text-[#62677E] resize-none transition-all focus:border-[#7C6CFF]/40 focus:shadow-[0_0_0_2px_rgba(124,108,255,0.15)]"

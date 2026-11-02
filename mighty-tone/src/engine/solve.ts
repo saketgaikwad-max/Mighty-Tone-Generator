@@ -143,6 +143,98 @@ function confidenceOf(kb: EngineKnowledge, intent: Intent, ctx: Ctx): number {
 }
 
 /**
+ * Refine an existing patch with feedback. Starts from basePatch instead of an archetype template,
+ * applies only the feedback intent's deltas/targets/blocks/models, then runs rules.
+ * @param locks Block kinds whose existing params should be preserved.
+ */
+export function refinePatch(
+  basePatch: Patch,
+  feedbackIntent: Intent,
+  device: DeviceKnowledge = defaultDevice,
+  kb: EngineKnowledge = engineKnowledge,
+  locks: BlockKind[] = [],
+): SolveResult {
+  const archetypeId = kb.archetypes.archetypes[feedbackIntent.archetype]
+    ? feedbackIntent.archetype
+    : kb.archetypes.default;
+  const profile = feedbackIntent.instrument ? kb.instruments[feedbackIntent.instrument] : undefined;
+  const ruleTrace: string[] = [];
+  const warnings: string[] = [];
+
+  const ctx: Ctx = {
+    intent: feedbackIntent,
+    archetypeId,
+    profile,
+    blocks: {} as Record<BlockKind, BlockState>,
+    models: modelIndex(device),
+    kb,
+    warnings,
+  };
+
+  for (const block of BLOCK_KINDS) {
+    const base = basePatch.blocks[block];
+    ctx.blocks[block] = {
+      block,
+      modelId: base.modelId,
+      enabled: base.enabled,
+      params: { ...base.params },
+    };
+  }
+
+  const lockedSet = new Set(locks);
+
+  for (const [b, newModelId] of Object.entries(feedbackIntent.models ?? {})) {
+    if (!lockedSet.has(b as BlockKind)) {
+      const model = ctx.models.get(newModelId);
+      if (model && model.block === b) setModel(ctx, b as BlockKind, newModelId);
+    }
+  }
+  for (const [b, on] of Object.entries(feedbackIntent.blocks ?? {})) {
+    if (!lockedSet.has(b as BlockKind)) ctx.blocks[b as BlockKind].enabled = on;
+  }
+  for (const [k, d] of Object.entries(feedbackIntent.deltas)) {
+    if (!lockedSet.has(blockOf(k as ParamKey) as BlockKind)) write(ctx, k as ParamKey, (cur) => cur + d);
+  }
+  for (const [k, [lo, hi]] of Object.entries(feedbackIntent.targets ?? {})) {
+    if (!lockedSet.has(blockOf(k as ParamKey) as BlockKind)) {
+      write(ctx, k as ParamKey, (cur) => Math.min(hi, Math.max(lo, cur)));
+    }
+  }
+
+  if (profile) {
+    const groups = (profile.corrections ?? []).filter((g) => !g.archetypes || g.archetypes.includes(archetypeId));
+    for (const g of groups) {
+      for (const b of g.enable ?? []) {
+        if (!lockedSet.has(b)) ctx.blocks[b].enabled = true;
+      }
+      for (const [k, d] of Object.entries(g.deltas ?? {})) {
+        if (!lockedSet.has(blockOf(k as ParamKey) as BlockKind)) write(ctx, k as ParamKey, (cur) => cur + d);
+      }
+    }
+    ruleTrace.push(`INST:${feedbackIntent.instrument}`);
+  }
+
+  for (const rule of kb.rules) {
+    if (!test(ctx, rule.condition)) continue;
+    for (const a of rule.action) act(ctx, a);
+    ruleTrace.push(rule.id);
+  }
+
+  const draft: Patch = {
+    ...basePatch,
+    blocks: ctx.blocks,
+    master: basePatch.master,
+    name: basePatch.name,
+    warnings: [],
+  };
+  const bytes = encodePreset(draft, basePatch.raw);
+  const patch = decodePreset(bytes, basePatch.qrHeader);
+  patch.warnings.push(...warnings);
+
+  return { patch, ruleTrace, archetype: archetypeId, confidence: confidenceOf(kb, feedbackIntent, ctx) };
+}
+
+/**
  * Intent -> Patch. Order: archetype models/chain + priors, vocabulary deltas and target bands, instrument
  * corrections, expert rules; then the result is encoded over the archetype's real-fixture template.
  * @param locks Block kinds whose existing params should be preserved (not overwritten by deltas/targets/rules).
