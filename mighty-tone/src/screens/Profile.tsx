@@ -107,6 +107,12 @@ export function Profile() {
   const [addingInstrument, setAddingInstrument] = useState(false);
   const [newInstrumentName, setNewInstrumentName] = useState('');
 
+  // Gemini key saved confirmation
+  const [geminiSaved, setGeminiSaved] = useState(false);
+
+  // Instrument detail sheet
+  const [detailInstrument, setDetailInstrument] = useState<string | null>(null);
+
   // IR slots count
   const [irSlotCount, setIrSlotCount] = useState(0);
 
@@ -173,6 +179,8 @@ export function Profile() {
 
   function handleSaveGeminiKey() {
     localStorage.setItem('gemini-key', geminiKey);
+    setGeminiSaved(true);
+    setTimeout(() => setGeminiSaved(false), 2500);
   }
 
   async function handleClearData() {
@@ -240,8 +248,15 @@ export function Profile() {
           {instruments.map((inst, idx) => (
             <Row key={inst + String(idx)} last={idx === instruments.length - 1 && !addingInstrument}>
               <span className="text-lg">{instrumentEmoji(inst)}</span>
-              <span className="flex-1 text-[#F2F3F8] text-[15px]">{inst}</span>
-              <Chevron />
+              <button
+                type="button"
+                className="flex-1 flex items-center gap-1 text-left"
+                style={{ minHeight: 44 }}
+                onClick={() => setDetailInstrument(inst)}
+              >
+                <span className="flex-1 text-[#F2F3F8] text-[15px]">{inst}</span>
+                <Chevron />
+              </button>
               <button
                 type="button"
                 onClick={() => removeInstrument(idx)}
@@ -333,14 +348,15 @@ export function Profile() {
             <button
               type="button"
               onClick={handleSaveGeminiKey}
-              className="text-xs font-semibold px-3 rounded-[8px]"
+              className="text-xs font-semibold px-3 rounded-[8px] transition-all"
               style={{
-                background: 'linear-gradient(135deg,#7C6CFF,#4F8BFF)',
+                background: geminiSaved ? '#34D399' : 'linear-gradient(135deg,#7C6CFF,#4F8BFF)',
                 color: 'white',
                 height: 32,
+                minWidth: 52,
               }}
             >
-              Save
+              {geminiSaved ? '✓ Saved' : 'Save'}
             </button>
           </Row>
           {/* ChatGPT/Claude handoff toggle */}
@@ -495,6 +511,84 @@ export function Profile() {
         </Section>
 
       </div>
+
+      {/* Instrument detail sheet */}
+      {detailInstrument && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end"
+          style={{ background: 'rgba(0,0,0,0.65)' }}
+          onClick={() => setDetailInstrument(null)}
+        >
+          <div
+            className="w-full flex flex-col gap-4 px-4 pt-3 pb-10"
+            style={{
+              background: 'rgba(20,24,38,0.98)',
+              backdropFilter: 'blur(24px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '26px 26px 0 0',
+              maxHeight: '70vh',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* drag handle */}
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-1" />
+
+            {/* header */}
+            <div className="flex items-center justify-between">
+              <p className="text-[#F2F3F8] font-bold text-[20px]">
+                {instrumentEmoji(detailInstrument)} {detailInstrument}
+              </p>
+              <button
+                type="button"
+                onClick={() => setDetailInstrument(null)}
+                style={{ color: '#7C6CFF', minHeight: 44, minWidth: 44, fontSize: 15, fontWeight: 600 }}
+              >
+                Done
+              </button>
+            </div>
+
+            {/* details */}
+            <div
+              className="flex flex-col gap-0 rounded-[18px] overflow-hidden"
+              style={{ background: 'rgba(28,32,52,0.62)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              {[
+                { label: 'Type', value: detailInstrument.toLowerCase().includes('mandolin') ? 'Mandolin' : 'Guitar' },
+                { label: 'Kind', value: detailInstrument.toLowerCase().includes('ej-200') || detailInstrument.toLowerCase().includes('jumbo') ? 'Acoustic' : 'Electric' },
+                { label: 'Pickup', value: detailInstrument.toLowerCase().includes('mandolin') ? 'Stacked HB' : detailInstrument.toLowerCase().includes('avion') ? 'Humbuckers (HH)' : detailInstrument.toLowerCase().includes('jumbo') ? 'Fishman Isys active' : detailInstrument.toLowerCase().includes('ej-200') ? 'Passive piezo' : 'Unknown' },
+              ].map(({ label, value }, i, arr) => (
+                <div
+                  key={label}
+                  className="flex items-center px-4 gap-3"
+                  style={{ minHeight: 48, borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
+                >
+                  <span className="text-[#9AA0B8] text-[14px] w-20 shrink-0">{label}</span>
+                  <span className="text-[#F2F3F8] text-[15px]">{value}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[#62677E] text-[12px] px-1">
+              The engine uses this instrument's pickup type to apply tone corrections automatically.
+            </p>
+
+            {/* remove button */}
+            <button
+              type="button"
+              onClick={() => {
+                const idx = instruments.indexOf(detailInstrument);
+                if (idx !== -1) removeInstrument(idx);
+                setDetailInstrument(null);
+              }}
+              className="w-full py-3 rounded-[14px] text-[15px] font-semibold"
+              style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', border: '1px solid rgba(248,113,113,0.25)' }}
+            >
+              Remove instrument
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* QR decode modal */}
       {showModal && decoded && (
